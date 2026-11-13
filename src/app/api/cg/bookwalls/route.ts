@@ -15,7 +15,7 @@ import { hlCoinOf, resolveBinPair, resolveCgSym } from "@/lib/binance/aliases";
 import { binAssetOf, getUniverse } from "@/lib/binance/universe";
 import { isClassic } from "@/lib/cg/classic";
 import { fapiFetch } from "@/lib/live/fapi";
-import { cleanGridStep, fetchHlCtxAndBook } from "@/lib/cg/fallbacks";
+import { cleanGridStep, fetchBinCandles, fetchHlCtxAndBook } from "@/lib/cg/fallbacks";
 
 export const dynamic = "force-dynamic";
 
@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
 
   const key = `${sym}|${market}|${interval}|${limit}|${band}|${endTime ?? "now"}`;
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < 18_000) return NextResponse.json(hit.body);
+  if (hit && Date.now() - hit.at < 60_000) return NextResponse.json(hit.body);
 
   const minUsd = minWallForSym(sym);
   await getUniverse();
@@ -163,18 +163,24 @@ export async function GET(req: NextRequest) {
 
           let candles: { ts: number; h: number; l: number }[] = [];
           try {
-            const leadKey = market === "futures" ? `Binance_${cgSym}USDT` : `Binance_SPOT_${cgSym}USDT`;
-            const kl = (await cgGet(
-              `/api/v2/kline?symbol=${encodeURIComponent(leadKey + "#kline")}&interval=${API_ITV[interval]}&limit=${Math.min(
-                limit + 2,
-                302
-              )}${endTime ? `&endTime=${endTime + 1}` : ""}`,
-              60_000
-            )) as { data?: KlineRow[] } | KlineRow[];
-            const klRows = Array.isArray(kl) ? kl : (kl.data ?? []);
-            candles = klRows
-              .map((r) => ({ ts: 1000 * Number(r[0]), h: Number(r[2]), l: Number(r[3]) }))
-              .filter((c) => Number.isFinite(c.h));
+            const rawBase = cgSym;
+            const bin = await fetchBinCandles(rawBase, API_ITV[interval], Math.min(limit + 2, 302)).catch(() => []);
+            if (bin.length) {
+              candles = bin.map((b: { t: number; h: number; l: number }) => ({ ts: b.t, h: b.h, l: b.l })).filter((c: { ts: number; h: number; l: number }) => Number.isFinite(c.h));
+            } else {
+              const leadKey = market === "futures" ? `Binance_${cgSym}USDT` : `Binance_SPOT_${cgSym}USDT`;
+              const kl = (await cgGet(
+                `/api/v2/kline?symbol=${encodeURIComponent(leadKey + "#kline")}&interval=${API_ITV[interval]}&limit=${Math.min(
+                  limit + 2,
+                  302
+                )}${endTime ? `&endTime=${endTime + 1}` : ""}`,
+                60_000
+              )) as { data?: KlineRow[] } | KlineRow[];
+              const klRows = Array.isArray(kl) ? kl : (kl.data ?? []);
+              candles = klRows
+                .map((r) => ({ ts: 1000 * Number(r[0]), h: Number(r[2]), l: Number(r[3]) }))
+                .filter((c) => Number.isFinite(c.h));
+            }
           } catch {
             candles = [];
           }

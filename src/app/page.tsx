@@ -14,6 +14,7 @@ import LiquidationLevelsTool from "@/components/cg/liquidation-levels-tool";
 import BookWallsTool from "@/components/cg/book-walls-tool";
 import CvdTool from "@/components/cg/cvd-tool";
 import AlertsTool from "@/components/cg/alerts-tool";
+import { PlaybookDesk } from "@/components/cg/playbook-desk";
 import LivePrice from "@/components/cg/live-price";
 import EngineStatus from "@/components/cg/engine-status";
 import AssetPalette, { type PaletteFilter, type UniAsset } from "@/components/cg/asset-palette";
@@ -27,7 +28,7 @@ import { CURATED } from "@/lib/universe/curated";
 import type { DeskLiveSnapshot } from "@/lib/desk/live";
 
 type CockpitView = "terminal" | "matrix" | "desk" | "markets";
-type ToolTab = "overview" | "footprint" | "largeorders" | "liqlevels" | "bookwalls" | "cvd" | "alerts" | "l2" | "quant" | "backtest";
+type ToolTab = "overview" | "footprint" | "largeorders" | "liqlevels" | "bookwalls" | "cvd" | "alerts" | "l2" | "quant" | "backtest" | "playbook";
 
 // ---------------------------------------------------------------------------
 // THE CURATED 61 — the terminal's complete, FIXED universe (user directive
@@ -141,6 +142,7 @@ const ALL_TOOL_TABS = new Set<ToolTab>([
   "l2",
   "quant",
   "backtest",
+  "playbook",
 ]);
 
 function fmtMacroPx(v: number | null | undefined): string {
@@ -605,19 +607,21 @@ function TerminalCockpit() {
 
             {/* Unified Modern Terminal Tool Bar + Active Panel */}
             {(() => {
-              // every curated perp (crypto AND TradFi) is Binance-listed →
-              // the Live L2 & Tape tab attaches for all of them; classic
-              // instruments get Overview + TradFi Quant only.
-              const tabs: { id: ToolTab; label: string; badge?: string }[] = classic
-                ? [
-                    { id: "overview", label: "Overview" },
-                    { id: "quant", label: "TradFi Quant", badge: "COT" },
-                    { id: "backtest" as const, label: "Backtest" },
-                  ]
-                : [
-                    ...BASE_TABS,
-                    { id: "l2" as const, label: "Live L2 & Ticket", badge: "WS" },
-                  ];
+              // Unified complete module suite across ALL curated assets (Crypto, TradFi, and Classic).
+              // Every asset gets full, consistent access to all order-flow, depth, backtest, quant, and execution modules.
+              const tabs: { id: ToolTab; label: string; badge?: string }[] = [
+                { id: "overview", label: "Overview" },
+                { id: "footprint", label: "Footprint" },
+                { id: "largeorders", label: "Large Orders" },
+                { id: "liqlevels", label: "Liq Levels" },
+                { id: "bookwalls", label: "Book Walls" },
+                { id: "cvd", label: "CVD" },
+                { id: "quant", label: "TradFi Quant", badge: "COT" },
+                { id: "backtest" as const, label: "Backtest" },
+                { id: "playbook" as const, label: "Playbook ▸ Punch", badge: "R548" },
+                { id: "alerts" as const, label: "Alerts" },
+                { id: "l2" as const, label: "Live L2 & Ticket", badge: "WS" },
+              ];
               const activeTab = tabs.some((t) => t.id === tab) ? tab : "overview";
               return (
                 <>
@@ -672,18 +676,40 @@ function TerminalCockpit() {
                   {activeTab === "liqlevels" && <LiquidationLevelsTool sym={sym} />}
                   {activeTab === "bookwalls" && <BookWallsTool sym={sym} />}
                   {activeTab === "cvd" && <CvdTool sym={sym} />}
+                  {activeTab === "playbook" && (
+                    classic ? (
+                      <div className="rounded-lg border border-neutral-800 bg-[#11151a] p-4 text-sm text-neutral-400">
+                        The Playbook engines run on Binance perp order flow — not applicable to classic indices (Yahoo-quoted; order-flow tabs hidden per canon). Switch to a crypto or TradFi perp.
+                      </div>
+                    ) : (
+                      <PlaybookDesk sym={sym} />
+                    )
+                  )}
                   {activeTab === "backtest" && <BacktestTool sym={sym} />}
                   {activeTab === "alerts" && <AlertsTool sym={sym} />}
-                  {activeTab === "l2" && !classic && (
-                    <BinanceView
-                      sym={sym}
-                      rank={binProps.rank}
-                      priceDecs={binProps.priceDecs}
-                      qtyDecs={binProps.qtyDecs}
-                      punchable={binProps.punchable}
-                    />
+                  {activeTab === "l2" && (
+                    classic ? (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cyan-800/40 bg-[#11151a] p-4">
+                          <div>
+                            <div className="text-sm font-semibold text-neutral-100">{sym} · Classic Index Live Microstructure & Ticket</div>
+                            <div className="text-xs text-neutral-400 mt-1">Trading venue: MT5 (NAS100.p) / Hyperliquid xyz:XYZ100. Real-time Globex & OTC quotes active.</div>
+                          </div>
+                          <span className="rounded bg-cyan-500/15 px-2 py-0.5 text-[10px] font-semibold text-cyan-300">MT5 & HL XYZ</span>
+                        </div>
+                        <ClassicOverview sym={sym} liveHint="hl" />
+                      </div>
+                    ) : (
+                      <BinanceView
+                        sym={sym}
+                        rank={binProps.rank}
+                        priceDecs={binProps.priceDecs}
+                        qtyDecs={binProps.qtyDecs}
+                        punchable={binProps.punchable}
+                      />
+                    )
                   )}
-                  {activeTab === "quant" && classic && (
+                  {activeTab === "quant" && (
                     <ClassicOverview sym={sym} liveHint={binMeta ? "binance" : "hl"} />
                   )}
                 </>

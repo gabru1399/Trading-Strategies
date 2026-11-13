@@ -179,13 +179,15 @@ interface RawState {
   orders?: Array<{
     id: string;
     round?: string;
-    sym: string;
+    sym?: string;
+    asset?: string;
     mt5Symbol?: string;
-    side: "long" | "short";
+    side?: "long" | "short" | string;
+    action?: string;
     type?: string;
     status: string;
-    entry: number;
-    stop: number;
+    entry?: number;
+    stop?: number;
     targets?: number[];
     riskR?: number;
     regime?: string;
@@ -238,6 +240,31 @@ interface RawMt5 {
   spreads?: Record<string, { spreadPct?: number; pct?: number; spread_pct?: number }>;
 }
 
+/** A desk/state.json order row (status: suggested | placed | open | active ...). */
+interface RawOrder {
+  id: string;
+  round?: string;
+  sym?: string;
+  asset?: string;
+  mt5Symbol?: string;
+  side?: string;
+  action?: string;
+  type?: string;
+  status?: string;
+  entry?: number;
+  stop?: number;
+  targets?: number[];
+  riskR?: number;
+  regime?: string;
+  mode?: string;
+  rationale?: string;
+  notes?: string;
+  ticket?: number;
+  createdTs?: number;
+  expiresTs?: number | null;
+  [k: string]: unknown;
+}
+
 /** Fast lookup map for Screener Desk badges (`POS LONG`, `LIMIT SHORT`, `SUGGESTED`). */
 export function getDeskIndex(): Map<string, { badge: string; tone: "pos" | "limit" | "suggested" }> {
   const map = new Map<string, { badge: string; tone: "pos" | "limit" | "suggested" }>();
@@ -250,12 +277,20 @@ export function getDeskIndex(): Map<string, { badge: string; tone: "pos" | "limi
   const norm = (asset?: string, mt5Sym?: string) =>
     (asset || revSym.get((mt5Sym ?? "").toUpperCase()) || (mt5Sym ?? "").replace(/USD$/i, "")).toUpperCase();
 
-  for (const o of st?.orders ?? []) {
-    if (o.status === "suggested" || o.status === "placed" || o.status === "open" || o.status === "active") {
-      const s = o.sym.toUpperCase();
+  const ordersList: RawOrder[] = Array.isArray(st?.orders)
+    ? st.orders
+    : Array.isArray((st?.orders as any)?.activeOrders)
+    ? (st?.orders as any).activeOrders
+    : [];
+
+  for (const o of ordersList) {
+    const sym = (o.sym || o.asset) as string | undefined;
+    const side = (o.side || o.action) as string | undefined;
+    if (sym && side && (o.status === "suggested" || o.status === "placed" || o.status === "open" || o.status === "active")) {
+      const s = sym.toUpperCase();
       if (!map.has(s)) {
         map.set(s, {
-          badge: `${o.status === "suggested" ? "SUG" : "ORD"} ${o.side.toUpperCase()}`,
+          badge: `${o.status === "suggested" ? "SUG" : "ORD"} ${side.toUpperCase()}`,
           tone: o.status === "suggested" ? "suggested" : "limit",
         });
       }
@@ -290,8 +325,14 @@ export async function buildDeskLiveSnapshot(): Promise<DeskLiveSnapshot> {
   const activeSyms = new Set<string>();
   for (const p of mt5?.positions ?? []) activeSyms.add(symOf(p.asset, p.symbol));
   for (const o of mt5?.orders ?? []) activeSyms.add(symOf(o.asset, o.symbol));
-  for (const o of state?.orders ?? []) {
-    if (["suggested", "placed", "open", "active"].includes(o.status)) activeSyms.add(o.sym.toUpperCase());
+  const stateOrders: RawOrder[] = Array.isArray(state?.orders)
+    ? state.orders
+    : Array.isArray((state?.orders as any)?.activeOrders)
+    ? (state?.orders as any).activeOrders
+    : [];
+  for (const o of stateOrders) {
+    const sym = (o.sym || o.asset) as string | undefined;
+    if (sym && ["suggested", "placed", "open", "active"].includes(o.status ?? "")) activeSyms.add(sym.toUpperCase());
   }
 
   const priceMap = new Map<string, number | null>();
@@ -354,22 +395,24 @@ export async function buildDeskLiveSnapshot(): Promise<DeskLiveSnapshot> {
     };
   });
 
-  const orders: DeskOrderView[] = [...(state?.orders ?? [])]
+  const orders: DeskOrderView[] = [...stateOrders]
     .reverse()
     .slice(0, 20)
     .map((o) => {
-      const sym = o.sym.toUpperCase();
+      const sym = ((o.sym || o.asset || "") as string).toUpperCase();
       const livePrice = priceMap.get(sym) ?? null;
+      const rawSide = String(o.side || o.action || "long").toLowerCase();
+      const side: "long" | "short" = rawSide.includes("short") || rawSide.includes("sell") ? "short" : "long";
       return {
         id: o.id,
         round: o.round ?? "–",
         sym,
         mt5Symbol: o.mt5Symbol ?? `${sym}USD`,
-        side: o.side,
+        side,
         type: o.type ?? "limit",
-        status: o.status,
-        entry: o.entry,
-        stop: o.stop,
+        status: o.status ?? "unknown",
+        entry: o.entry ?? 0,
+        stop: o.stop ?? 0,
         targets: o.targets ?? [],
         riskR: o.riskR ?? null,
         regime: o.regime ?? null,
@@ -380,7 +423,7 @@ export async function buildDeskLiveSnapshot(): Promise<DeskLiveSnapshot> {
         createdTs: o.createdTs ?? 0,
         expiresTs: o.expiresTs ?? null,
         livePrice,
-        distToEntryPct: ["suggested", "placed", "open", "active"].includes(o.status) ? distPct(o.entry, livePrice) : null,
+        distToEntryPct: ["suggested", "placed", "open", "active"].includes(o.status ?? "") ? distPct(o.entry ?? 0, livePrice) : null,
       };
     });
 

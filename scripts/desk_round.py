@@ -27,6 +27,11 @@ import json, sys, time, urllib.request, urllib.error, re
 from pathlib import Path
 from datetime import datetime, timezone
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 DESK = ROOT / "desk"
 STATE_FILE = DESK / "state.json"
@@ -97,10 +102,10 @@ def cluster_usd(lv):
 
 
 # ---------------------------------------------------------------- load state
-state = json.loads(STATE_FILE.read_text())
+state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
 cfg = state["config"]
 
-log_txt = LOG_FILE.read_text()
+log_txt = LOG_FILE.read_text(encoding="utf-8")
 round_no = len(re.findall(r"^## R(\d+)", log_txt, re.M)) + 1
 rid = f"R{round_no}"
 
@@ -242,9 +247,10 @@ for o in orders:
         o["withdrawReason"] = f"riskR {o['riskR']} below mandated minimum {cfg['min_r_multiple']}"
         lifecycle_events.append(f"{o['id']} WITHDRAWN (R {o['riskR']} < min {cfg['min_r_multiple']} — user mandate 1:2)")
         continue
-    sc = (scored.get(o["sym"]) or {}).get("score")
-    flipped = o.get("side") == "long" and (sc is not None and sc < 0) or \
-              o.get("side") == "short" and (sc is not None and sc > 0)
+    sc = (scored.get(o.get("sym") or o.get("asset")) or {}).get("score")
+    o_side = o.get("side") or (("long" if o.get("action") == "buy" else "short") if o.get("action") else None)
+    flipped = o_side == "long" and (sc is not None and sc < 0) or \
+              o_side == "short" and (sc is not None and sc > 0)
     if flipped and o.get("status") == "suggested":
         o["status"] = "withdrawn"
         o["statusTs"] = now_ms
@@ -315,7 +321,7 @@ def build_debate(sym, side, rec, deep, regime=None):
     rsi = (rec.get("rsi") or {}).get("h4")
     ev = (f"h4 {'↑' if h4_up else '↓'}/d1 {'↑' if d1_up else '↓'} EMA, price {'above' if above_v else 'below'} day VWAP "
           f"({fmt(sym, price)} vs {fmt(sym, vw.get('vwap'))}), h4 RSI {rsi and round(rsi, 1)}, day {(rec.get('chgDayPct') or 0):+.1f}%")
-    d.append({"source": "overview", "verdict": "FOR" if align >= 2 else ("AGAINST" if align <= 1 and (1 - align) >= 2 else "NEUTRAL"), "evidence": ev})
+    d.append({"source": "overview", "verdict": "FOR" if align >= 2 else ("AGAINST" if align == 0 else "NEUTRAL"), "evidence": ev})
     # 2. footprint signals
     c = rec.get("signals") or {}
     sig_sign = (c.get("bullish", 0) - c.get("bearish", 0)) * sgn
@@ -335,13 +341,16 @@ def build_debate(sym, side, rec, deep, regime=None):
     # 3. large orders (whale walls)
     walls = deep.get("walls") or []
     near = [w for w in walls if abs(w["price"] - (price or 0)) / (price or 1) <= 0.02]
-    opp_near = [w for w in near if (w["side"] == "ask") != long]
-    sup_near = [w for w in near if (w["side"] == "bid") == long]
+    if long:
+        opp_near = [w for w in near if w["side"] == "ask"]
+        sup_near = [w for w in near if w["side"] == "bid"]
+    else:
+        opp_near = [w for w in near if w["side"] == "bid"]
+        sup_near = [w for w in near if w["side"] == "ask"]
     if opp_near:
         w = opp_near[0]
         d.append({"source": "largeOrders", "verdict": "AGAINST",
-                  "evidence": f"{w['side']} wall ${w['usd'] / 1e6:.1f}M @ {fmt(sym, w['price'])} within 2% — opposing resting size" if False else
-                  f"{w['side']} wall ${w['usd'] / 1e6:.1f}M @ {fmt(sym, w['price'])} within 2% opposes"})
+                  "evidence": f"{w['side']} wall ${w['usd'] / 1e6:.1f}M @ {fmt(sym, w['price'])} within 2% opposes"})
     elif sup_near:
         w = sup_near[0]
         d.append({"source": "largeOrders", "verdict": "FOR",
@@ -379,8 +388,9 @@ def build_debate(sym, side, rec, deep, regime=None):
     bw = deep.get("bw") or {}
     imb = bw.get("imbalance")
     if imb is not None:
-        imb_long_fav = imb > IMB_FOR
-        imb_short_fav = imb < IMB_AGAINST
+        bid_share = (imb + 1.0) / 2.0
+        imb_long_fav = bid_share > IMB_FOR
+        imb_short_fav = bid_share < IMB_AGAINST
         v = "FOR" if (imb_long_fav if long else imb_short_fav) else ("AGAINST" if (imb_short_fav if long else imb_long_fav) else "NEUTRAL")
         delta = (imb - (bw.get("imbalance5mAgo") or imb))
         d.append({"source": "bookWalls", "verdict": v,
@@ -601,13 +611,14 @@ def deep_for(sym):
 for o in state["orders"]:
     if o.get("status") != "suggested":
         continue
-    sym = o["sym"]
+    sym = o.get("sym") or o.get("asset")
     if scored.get(sym, {}).get("score") is None:
         continue
-    deb = build_debate(sym, o["side"], assets[sym], deep_for(sym), regime=regimes.get(sym))
+    o_side = o.get("side") or (("long" if o.get("action") == "buy" else "short") if o.get("action") else None)
+    deb = build_debate(sym, o_side, assets[sym], deep_for(sym), regime=regimes.get(sym))
     o["debate"] = deb
     o["perpRefPrice"] = assets[sym].get("price")
-    ok, nf, na = debate_ok(deb, o["side"])
+    ok, nf, na = debate_ok(deb, o_side)
     if not ok:
         o["status"] = "withdrawn"
         o["statusTs"] = now_ms
@@ -637,7 +648,7 @@ for sym in cands:
               1 if parts.get("vwap", 0) * (1 if side == "long" else -1) > 0 else 0)
         if sum(al) < 2:
             continue
-    if any(o.get("sym") == sym and o.get("side") == side and o.get("status") in ("suggested", "placed", "filled")
+    if any((o.get("sym") or o.get("asset")) == sym and (o.get("side") or o.get("action")) in (side, "buy" if side == "long" else "sell") and o.get("status") in ("suggested", "placed", "filled")
            for o in state["orders"] + live_positions):
         continue
     if n_open_positions + len([o for o in state["orders"] if o.get("status") in ("suggested", "placed")]) >= cfg["max_concurrent_positions"]:
@@ -702,7 +713,7 @@ state["analysis"] = {
     "watchlist": watch,
 }
 if not DRY:
-    STATE_FILE.write_text(json.dumps(state, indent=2) + "\n")
+    STATE_FILE.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
 bias_tbl = "  ".join(f"{s}{scored[s]['score']:+.0f}({regimes.get(s, '?')[:5]})" for s in cands if abs(scored[s]["score"]) >= 2)
 lines = [f"## {rid} · {now_iso} · zai-desk", ""]
@@ -714,7 +725,7 @@ if lifecycle_events:
     lines += ["### Order lifecycle"] + [f"- {e}" for e in lifecycle_events] + [""]
 lines += ["### Positions"] + (pos_lines or ["- no open positions"]) + [""]
 if not DRY:
-    with LOG_FILE.open("a") as f:
+    with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
 print("=" * 96)
