@@ -1,0 +1,59 @@
+---
+description: Autonomous trading execution enforcement — forces sequential CANONICAL_MASTER_SPECIFICATION execution on every activation
+trigger: always
+---
+
+# MANDATORY SWARM EXECUTION PROTOCOL (AUTO-INJECTED WORKSPACE RULE)
+
+**USER DIRECTIVE (MANDATORY BY DEFAULT):**
+Strict line-by-line adherence to `desk/CANONICAL_MASTER_SPECIFICATION.md` (the sole authoritative SOP v2.0.0 master specification) is BINDING AND MANDATORY BY DEFAULT AT ALL TIMES.
+
+## 1. UNIVERSE COVERAGE: 61 CURATED ASSETS (ZERO GAPS)
+- **30 Crypto USDT-M Perps**: BTC, ETH, BNB, SOL, XRP, ADA, DOGE, TRX, LINK, LTC, AVAX, DOT, NEAR, UNI, ATOM, XLM, ETC, FIL, ICP, HBAR, APT, ARB, OP, SUI, SEI, INJ, TIA, VET, 1000PEPE, 1000SHIB.
+- **28 TradFi USDT-M Perps**: XAU, NVDA, SNDK, SOXL, SPCX, GOOGL, MU, SKHY, XAG, CL, INTC, CRCL, MSTR, QQQ, ANTHROPIC, AAPL, TSLA, DRAM, KORU, META, NBIS, MSFT, AMZN, AMD, COIN, NFLX, AVGO, TSM.
+- **3 Classic Indices**: SPX500, UKO, NDX100.
+- All 61 assets are scanned every cycle without omission.
+
+## 2. MANDATORY PRE-FLIGHT CHECKLIST & EXECUTION DISCIPLINE (PHASES -1 THROUGH 7)
+Every execution turn and response MUST OPEN with the explicit confirmation of the Pre-Flight Verification Checklist:
+```text
+### ✅ PRE-FLIGHT VERIFICATION CHECKLIST (ROUND R<n>)
+[x] Pre-Flight Verification Checklist COMPLETED in full.
+[x] Fresh analysis of each of the 61 Curated Assets executed from scratch (Zero cached echoes).
+[x] Single Dynamic 1200s Timer verified (Zero duplicate timers, zero cron).
+[x] Live Delta Exchange India CLOB & Margin Solvency audited (Account #26902927).
+[x] Concurrency Circuit (P5-06) & Risk Gates (Gate 1-8) armed.
+```
+
+On every activation and execution turn:
+- **Phase -1 (Structural Self-Audit)**: Verify entire prompt read, tool-first commitment, and single-timer constraint.
+- **Phase 0 (Pre-Flight SOP & Tool Ingestion)**: Ingest `desk/CANONICAL_MASTER_SPECIFICATION.md`, WAKE inbox, user profile, memory, wallet balances, positions, open orders, and adversarial subagent.
+- **Phase 1 (Universe Screening & Tab 7 Routing)**: Fetch 61-asset screener telemetry, route archetypes via Tab 7 regime, output uncompressed screening matrix.
+- **Phase 2 (16-Dimension Telemetry Extraction)**: Complete the mandatory 16-point Telemetry Audit Sheet (Section 8) for in-scope assets.
+- **Phase 3 (8 Socratic Gates & 10 Pitfall Inquests)**: Calibrated gates (G1-G8, including Gate 7 Dollar Risk Invariant $\le 1.0\%$ and Gate 8 Active Cascade Climax Gate).
+- **Phase 4 (6-Step DECIDE Dossier)**: Direction, Entry, Confluence, Invalidation, Drive (T1/T2/T3, R >= 1.5R, T1 >= 2.0R), Execution.
+- **Phase 5 (CLOB Execution & Concurrency Hygiene)**: Maker limit orders (`post_only=true`, `mark_price` triggers, isolated leverage). Max 2 positions. Enforce First-Two-Fills circuit (P5-06), +1.0R Breakeven (P5-04), and 8-bar time stop (P5-05).
+- **Phase 6 (AGI Meta-Learning Debrief & Persistence)**: Structured post-mortem appended to `desk/log.md`, `desk/state.json` synced, committed and pushed to git.
+- **Phase 7 (Dynamic Timer Re-Arm)**: Mandatory LAST CALL: `schedule(DurationSeconds=1200, Prompt=...)`. ZERO static cron, ZERO daemon.
+
+## 3. TABLE 7 SCORING INVARIANTS (ANTI-FABRICATION GATE)
+- Every score MUST be itemized showing all 8 factors.
+- **Factor 1 (Directional Trend) = 0.0 in `RANGE_BALANCE`** — non-negotiable.
+- Score < 5.0 pts = HARD VETO. 100% Cash Defense.
+
+## 4. SHARED ACCOUNT ISOLATION (DELTA INDIA `26902927`)
+- Two separate chats run on this Delta account.
+- Track trades STRICTLY via internal exchange Order IDs / Ticket Numbers recorded in `desk/state.json`.
+- NEVER cancel, modify, or report external algo orders (`FIB4H_*`, `SOLVUSD`, `TACUSD`).
+
+## 5. SCHEDULING AND ROUND LAUNCH
+- Start with `desk/CANONICAL_PROMPT.txt` from the current CG-Terminal workspace.
+- Use the Canonical Master Specification for scope, mode, step order, evidence and scheduling.
+- A manual AUDIT session runs once. A scheduler wake must be separately authorized and use the current workspace.
+
+## 6. CONTINUOUS PLANNING, BRAINSTORMING & COGNITIVE MANDATES (/plan, /brainstorming, /karpathy-guidelines, /thinking-model-router)
+- Every autonomous prompt, task formulation, and dynamic wakeup must explicitly carry `/goal /executing-plans /plan /brainstorming /karpathy-guidelines /thinking-model-router`.
+- **`/plan`**: Enforces structured pre-flight technical design, verification, and artifact documentation before placing or altering exchange orders.
+- **`/brainstorming`**: Enforces Socratic exploration of alternative entry models (e.g., session VWAP/POC pullback fades vs. liquidation sweep retests) to prevent entry tightness and execution apathy.
+- **`/karpathy-guidelines`**: Enforces simplicity first, surgical changes, explicit assumptions, and verifiable empirical success criteria.
+- **`/thinking-model-router`**: Systematically routes complex market scenarios and trading formulations through the multi-model cognitive lattice.

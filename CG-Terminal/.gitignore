@@ -1,0 +1,114 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+local-*
+.claude
+.z-ai-config
+.zscripts/
+*.log
+dev.log
+dev.out.log
+__pycache__/
+*.pyc
+scripts/*.png
+test
+prompt
+
+server.log
+# Skills directory
+/skills/
+# database
+prisma/db/
+*.db
+*.db-journal
+
+# continuity engine store
+data/*
+!data/.gitkeep
+
+# sandbox artifacts — never commit (local machine only)
+/.zscripts/
+/tool-results/
+/upload/
+/download/
+/mini-services/
+/db/
+
+# session continuity notes (assistant memory, local only)
+/SESSION-MEMORY.md
+
+# desk daemon local state (never commit)
+desk/.daemon.lock
+desk/.daemon-state.json
+
+# SECURITY (external review AI-2 §0, 2026-11-14): live MT5 account data must
+# never be pushed — the repo is publicly cloneable. mt5.json carries the
+# account login, balance, open positions with tickets/SL/TP; positioning.json
+# and the alert fire-state are machine-local telemetry. Local consumers
+# (/api/desk/live, daemon, deepscan) read them from the working tree, which
+# git does not touch. The sandbox gets positions via desk/state.json
+# positions[] (mirrored by the exec agent), not via these files.
+desk/mt5.json
+desk/positioning.json
+desk/alerts.local.json
+desk/deepscan/MT5-SCAN-*.md
+
+# scratch outputs (local analysis artifacts, never source)
+scripts/*.json
+!scripts/research/*.json
+scripts/*.xlsx
+scripts/*.png
+
+# multi-agent review tooling (cloned externals + probe w/ key copy — never commit)
+external/
+scripts/probe-new-syms.mjs
+
+# large sweep raw data dumps
+scripts/*_data.json
+
+desk/crypto_sweep_*.json
+Delta_Exchange/
+Delta_Fibonacci_Institutional_Business/
+*.csv
+
+scratch/

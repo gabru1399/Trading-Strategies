@@ -1,0 +1,87 @@
+# Root .gitignore for Trading-Strategies
+
+# Dependencies & Package Managers
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js Build Outputs
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Python Caches & Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.venv/
+env/
+venv/
+ENV/
+*.egg-info/
+.installed.cfg
+*.egg
+.git_sub/
+
+# Secrets & Local Credentials (NEVER COMMIT)
+.env*
+!.env.example
+*.pem
+desk/mt5.json
+desk/positioning.json
+desk/alerts.local.json
+desk/.daemon.lock
+desk/.daemon-state.json
+audit/*.log
+audit/*.pid
+audit/mt5_*.json
+audit/trade_cooldowns.json
+
+# Large Telemetry & Backtest Data Dumps (>25MB)
+*.db
+*.db-journal
+*.csv
+*.xlsx
+*.jsonl
+*.parquet
+CG-Terminal/data/*
+!CG-Terminal/data/.gitkeep
+CG-Terminal/Delta_Exchange/
+CG-Terminal/Delta_Fibonacci_Institutional_Business/
+Delta-Fibonacci-Institutional-Business/Blueberry_Data/
+FundedNext_Data/
+**/desk/crypto_sweep_*.json
+**/desk/deepscan/
+**/deepscan/
+desk/crypto_sweep_*.json
+desk/deepscan/TELEMETRY-*.json
+desk/deepscan/MT5-SCAN-*.md
+
+# Logs & Temporary Files
+*.log
+dev.log
+dev.out.log
+server.log
+tool-results/
+upload/
+download/
+mini-services/
+scratch/
+test
+prompt
+
+# OS Artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
