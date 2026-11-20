@@ -31,194 +31,96 @@
     "operator_policy_updated_at": "2026-11-20T17:05:47.546850+00:00"
   },
   "analysis": {
-    "last_round": "R788",
-    "last_round_ts": 1795215940827,
+    "last_round": "R789",
+    "last_round_ts": 1795216999098,
     "engine": "v3.2 (regime-aware: trend-pullback + mean-revert templates | 9-source debate + microFlow vote | FOR>=3 & FOR>AGAINST | min R 2.0 | perpRefPrice basis stamp)",
     "assets": {
       "BTC": {
-        "price": 59144,
-        "chgDayPct": -4.543789229381227,
-        "score": -0.62,
-        "parts": {
-          "notif": 0.89,
-          "signals": 0.99,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0.5
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "ETH": {
-        "price": 1626.7,
-        "chgDayPct": -7.401820427726513,
-        "score": -1.23,
-        "parts": {
-          "notif": 0.27,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0.5
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "SOL": {
-        "price": 69.44,
-        "chgDayPct": -5.019833128163045,
-        "score": -1.42,
-        "parts": {
-          "notif": 0.58,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "BNB": {
-        "price": 541.22,
-        "chgDayPct": -6.782638649672751,
-        "score": -5.62,
-        "parts": {
-          "notif": -0.62,
-          "signals": -1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0.5,
-          "cvd": -1.5
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "XRP": {
-        "price": 0.914,
-        "chgDayPct": -4.781748098760281,
-        "score": -2.92,
-        "parts": {
-          "notif": -0.92,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "ADA": {
-        "price": 0.1434,
-        "chgDayPct": -5.533596837944659,
-        "score": -1.47,
-        "parts": {
-          "notif": 0.53,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "AVAX": {
-        "price": 6.6,
-        "chgDayPct": -5.552375500858626,
-        "score": -2.37,
-        "parts": {
-          "notif": -0.36,
-          "signals": 0.99,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "DOGE": {
-        "price": 0.05461,
-        "chgDayPct": -6.152259838460217,
-        "score": -1.72,
-        "parts": {
-          "notif": 0.28,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "LINK": {
-        "price": 8.601,
-        "chgDayPct": -4.4227136348483125,
-        "score": -1.72,
-        "parts": {
-          "notif": 0.28,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "LTC": {
-        "price": 40.69,
-        "chgDayPct": -3.7834003310475324,
-        "score": -2.31,
-        "parts": {
-          "notif": -0.31,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "XAU": {
-        "price": 3549.9,
-        "chgDayPct": -1.7421197728103113,
-        "score": -1.24,
-        "parts": {
-          "notif": 0.26,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0.5
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       },
       "XAG": {
-        "price": 41.41,
-        "chgDayPct": -2.884615384615394,
-        "score": -0.59,
-        "parts": {
-          "notif": 0.91,
-          "signals": 1,
-          "trend": -2.0,
-          "vwap": -1,
-          "rsi": 0.5
-        },
-        "error": null
+        "price": null,
+        "chgDayPct": null,
+        "score": null,
+        "parts": {},
+        "error": "market: <urlopen error [Errno 111] Connection refused>; signals: <urlopen error [Errno 111] Connection refused>"
       }
     },
-    "watchlist": [
-      {
-        "sym": "BNB",
-        "score": -5.62
-      },
-      {
-        "sym": "XRP",
-        "score": -2.92
-      },
-      {
-        "sym": "AVAX",
-        "score": -2.37
-      },
-      {
-        "sym": "LTC",
-        "score": -2.31
-      },
-      {
-        "sym": "DOGE",
-        "score": -1.72
-      },
-      {
-        "sym": "LINK",
-        "score": -1.72
-      }
-    ]
+    "watchlist": []
   },
   "orders": [
     {

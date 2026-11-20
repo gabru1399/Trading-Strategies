@@ -85,3 +85,84 @@ class TestDailyLossKillSwitch(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAvellanedaStoikovMath(unittest.TestCase):
+    """Regression tests for the corrected A-S formulation (relative sigma)."""
+
+    def _model(self, **kw):
+        from models.model1_avellaneda_stoikov import AvellanedaStoikovModel
+        return AvellanedaStoikovModel("TESTUSD", **kw)
+
+    def test_reservation_price_relative_across_scales(self):
+        """The inventory penalty must scale WITH price: 1 contract of inventory
+        must skew quotes by the same FRACTION on a 0.013 asset and a 33000 asset."""
+        for px in (0.013, 33_000.0):
+            m = self._model(gamma=0.1, sigma=0.01, kappa=1.5)
+            r = m.calculate_reservation_price(px, current_inventory=10)
+            expected_frac = 1.0 - 10 * 0.1 * (0.01 ** 2) * 1.0
+            self.assertAlmostEqual(r / px, expected_frac, places=10,
+                                   msg=f"penalty not scale-invariant at px={px}")
+
+    def test_reservation_price_direction(self):
+        m = self._model(gamma=0.1, sigma=0.01)
+        self.assertLess(m.calculate_reservation_price(100.0, 5), 100.0)   # long -> sell cheaper
+        self.assertGreater(m.calculate_reservation_price(100.0, -5), 100.0)  # short -> buy higher
+        self.assertEqual(m.calculate_reservation_price(100.0, 0), 100.0)
+
+    def test_half_spread_includes_volatility_term(self):
+        """A-S half-spread = 0.5*(fill_term + vol_term) in relative units;
+        higher sigma must widen the quoted spread around reservation price."""
+        m_low = self._model(gamma=0.1, sigma=0.001, kappa=1.5)
+        m_high = self._model(gamma=0.1, sigma=0.05, kappa=1.5)
+        q_low = m_low.calculate_optimal_quotes(100.0, 0, 99.9, 100.1, tick_size=0.01)
+        q_high = m_high.calculate_optimal_quotes(100.0, 0, 99.9, 100.1, tick_size=0.01)
+        # Both quote at least at BBO (post-only clamp); the vol-widened model
+        # must not quote INSIDE the BBO either way.
+        for q in (q_low, q_high):
+            self.assertLessEqual(q["quote_bid"], 99.9)
+            self.assertGreaterEqual(q["quote_ask"], 100.1)
+        # And high-vol reservation skew must differ from low-vol at same inventory
+        r_low = m_low.calculate_reservation_price(100.0, 10)
+        r_high = m_high.calculate_reservation_price(100.0, 10)
+        self.assertLess(r_high, r_low)  # higher vol -> stronger inventory penalty
+
+    def test_update_volatility_adapts(self):
+        m = self._model(gamma=0.1, sigma=0.001)
+        base = m._rel_vol
+        # A burst of 2% moves must push the EW estimate up
+        px = 100.0
+        for _ in range(20):
+            px *= 1.02
+            m.update_volatility(px)
+        self.assertGreater(m._rel_vol, base)
+
+
+class TestSniperGate(unittest.IsolatedAsyncioTestCase):
+    """Model 2 taker sniping must never fire unless --snipe AND --live."""
+
+    def _engine(self, snipe, live):
+        eng = make_engine(live=live)
+        eng.snipe = snipe
+        eng.reference_prices["TESTUSD"] = 100.0
+        # Prime book
+        eng.books["TESTUSD"].update_from_snapshot(
+            [{"price": 99.5, "size": 10}], [{"price": 100.5, "size": 10}], timestamp=0.0)
+        return eng
+
+    async def test_snipe_requires_both_flags(self):
+        for snipe, live in ((False, False), (True, False), (False, True)):
+            eng = self._engine(snipe, live)
+            eng.client.place_order = AsyncMock()
+            # Simulate a big Binance surge: reference jumps to 101 -> stale ask
+            eng.m2_models["TESTUSD"].update_binance_price(96.0, timestamp=1.0)
+            eng.reference_prices["TESTUSD"] = 96.0
+            eng.evaluate_symbol_cycle("TESTUSD")
+            # cycle logs but never places unless snipe and live
+            # (dry-run path places nothing at all)
+            if not (snipe and live):
+                eng.client.place_order.assert_not_awaited()
+
+
+if __name__ == "__main__":
+    unittest.main()

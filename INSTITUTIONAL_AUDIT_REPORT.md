@@ -97,3 +97,114 @@ with the fix applied in this branch.
 
 Skipped tests re-enable automatically on the Windows host with MT5, the local
 parquet lake, or `pip install kaizen-agent`.
+
+---
+
+# Phase 2 — Full Deep-Dive, Fix & Run Verification (2026-11-20, same day)
+
+Every engine was subsequently read **line by line** and **executed**, not just
+audited. Findings and outcomes below extend the Phase-1 hardening above.
+
+## Delta-Fibonacci — deep dive & functional proof
+
+**Read fully**: all 9 engine modules (`vwap_bands`, `candle_rejection`,
+`mt5_multicriteria_trader`, `live_multicriteria_runner` (899 lines),
+`kaizen_self_improvement`, `kaizen_agent_bridge`, `multidim_grid_backtest`,
+`quant_robustness`), the 15-symbol/18-setup `EXPANDED_OPTIMAL_ALPHA_BASKET`,
+and the validation/peer-review scripts.
+
+**Verdict: mathematically sound.** Specifics verified:
+- Session VWAP: grouped-cumsum running variance, correct ±1σ/±2σ bands, UTC vs
+  broker (UTC+2) anchoring by asset class.
+- All 5 rejection patterns (pinbar, two-bar, three-bar sweep, cluster stall,
+  double-tap) use ATR-scaled tolerances and structural SLs; no lookahead.
+- Backtest engine: signal on bar *i* → entry at open of bar *i+1*; intrabar
+  adverse sequencing (bearish bar checks SL first); trailing ratchet identical
+  to the live runner's `calculate_trailing_stop_update`.
+- Quant stack: Numba MC bootstrap, Bailey–Lopez de Prado DSR (with the
+  Euler–Mascheroni expected-max correction), 70/30 chronological IS/OOS split,
+  anti-curve-fit gate.
+
+**Functional proof** (`scripts/e2e_engine_proof.py`, synthetic 3,000-bar series
+through the *production* code paths):
+- 1,630 VWAP signals across 16 pattern variants; 570 EMA signals.
+- 190 trades on `trail_0.5r` (net +21.97R, PF 1.24, maxDD 11.1R).
+- MC(5k): median +22.2R, p(profit) 0.917 · DSR 1.0 · IS +23.2R → OOS +10.2R.
+- Gate verdict on synthetic data: `INSTITUTIONAL_ALPHA`; live entry API
+  (`evaluate_live_setup_signal`) fires correctly.
+
+## HFT — deep dive, model fixes & live dry-run
+
+**Read fully**: engine, all 3 models, core clients, research scanner, tests.
+
+### C1. Avellaneda-Stoikov model was dimensionally wrong (P1)
+- `sigma` was an absolute price constant (0.015) — on a 0.013-priced asset the
+  inventory penalty exceeded the price itself; on BTC it was zero. The
+  half-spread conversion divided by 10,000 with no basis, and the model's
+  default `kappa=1.5` implies a **64% half-spread** in relative units.
+- **Fix**: sigma is now *relative* (fractional) volatility with an EW estimate
+  updated from live mids (`update_volatility`); the reservation penalty is
+  computed in relative terms and re-scaled by mid (scale-invariant across
+  $0.006 → $59,000 assets); the half-spread now includes the paper's volatility
+  term `γσ²(T−t)`; a competitiveness cap keeps the quote inside the observed
+  market spread; `kappa` recalibrated to 2,000.
+- **Verified live**: dry-run quotes on SLVONUSD went from
+  `Bid 25.34 / Ask 49.50` (32% spread) to `Bid 37.42 / Ask 37.44` — one tick
+  inside a 5.3 bps BBO. Regression tests assert scale-invariance and direction.
+
+### C2. Model 2 was fully dead code (P1 — deeper than Phase 1 found)
+- Phase 1 wired evaluation, but the Binance reference feed was never started.
+- **Fix**: `BinanceFuturesFeed` now starts in `initialize()` with Delta→Binance
+  symbol mapping, routes ticks into `reference_prices`, and shuts down cleanly.
+  Verified: feed subscribes (`SOLUSDT`, `BTCUSDT`), and a forced 50 bps Binance
+  surge fires `SNIPE_BUY` with +13.9 bps net edge through the exact engine path.
+- Taker sniping stays **opt-in** behind `--snipe` (requires `--live`); default
+  remains log-only. Covered by gate tests.
+
+### C3. Anonymous dry-run spammed HMAC crashes (P2)
+- Without credentials, `sync_positions` tried to sign with a `None` secret
+  every 2.5 s. Now skipped unless credentials exist (position/kill-switch
+  semantics only apply to live inventory anyway).
+
+**Functional proof**: 25-second live dry-run against the real Delta India API —
+product specs fetched (BTCUSD tick 0.5 / contract 0.001 BTC; AKEUSD contract
+10,000), the $5 notional guard correctly skipped BTC/SOL ($59/$69 contracts),
+micro-notional symbols quoted continuously, engine shut down cleanly.
+
+## CG-Terminal — mechanical sweep & production build
+
+- **280 Python files parse-checked**: **0 syntax errors**. 121 import cleanly;
+  83 are forensic/operator scripts that fail only on environment (gitignored
+  `desk/state.json` data, localhost terminal not running, Windows `windll`,
+  `C:\Users\SIGMA` host paths); 73 archive/MT5-host scripts; 3 have top-level
+  network side effects. Classification, not code defects.
+- **Production build**: `npm install` → `prisma generate` → `next build` —
+  clean, 23 API routes compiled, strict TypeScript (errors fail the build).
+
+### C4. Standalone output nested by dual lockfiles → JS chunks 404 in production (P1)
+- The repo carries both `bun.lock` and `package-lock.json`, so Turbopack
+  inferred the workspace root one level above the app; `.next/standalone/`
+  then nested under `<repo>/<app>/` and the `npm run build` static-copy put
+  `static/` in the wrong place — the server booted but every JS chunk 404'd.
+- **Fix**: `turbopack.root: __dirname` pinned in `next.config.ts`.
+- **Verified**: rebuild → `standalone/server.js` at the expected path, page
+  HTTP 200, chunk HTTP 200 (16,869 bytes), `/api/health` green, and
+  `/api/cg/ticker?sym=BTC` served a **fresh live Coinglass quote** (58,959.7).
+
+## Documentation truth pass
+
+- CG-Terminal README claimed "12 assets" — corrected to the curated 61-asset
+  universe (30 crypto + 28 TradFi + 3 classic) per `src/lib/universe/curated.ts`.
+- HFT README: runbook now documents the credential requirement, the enforced
+  kill switch, the new `--snipe` lane (Step 5), and the corrected A-S
+  formulation.
+
+## Consolidated test state after Phase 2
+
+| Suite | Command | Result |
+| --- | --- | --- |
+| HFT models + risk governors + A-S math + sniper gate | `cd HFT && python -m pytest tests/` | **15 passed** |
+| Delta-Fibonacci engine | `cd Delta-Fibonacci-Institutional-Business && python -m pytest tests/` | **37 passed, 32 skipped** |
+| Delta-Fib E2E proof (synthetic, production paths) | `python scripts/e2e_engine_proof.py` | **all 6 stages green** |
+| CG-Terminal Python | parse-check sweep (280 files) | **0 syntax errors** |
+| CG-Terminal web | `npm run build` + standalone boot + smoke | **clean, HTTP 200, live data** |

@@ -14,7 +14,7 @@ class AvellanedaStoikovModel:
         self,
         symbol: str,
         gamma: float = 0.1,         # Risk aversion parameter (higher = tighter inventory tolerance)
-        sigma: float = 0.015,       # High-frequency volatility estimate
+        sigma: float = 0.015,       # RELATIVE (fractional) per-period volatility, e.g. 0.015 = 1.5%
         kappa: float = 1.5,         # Order arrival intensity parameter
         T_minus_t: float = 1.0,     # Time horizon normalized to 1 session unit
         max_inventory: int = 50,    # Max contracts allowed to hold in inventory
@@ -29,15 +29,41 @@ class AvellanedaStoikovModel:
         self.max_inventory = max_inventory
         self.min_spread_bps = min_spread_bps
         self.maker_fee_rate = maker_fee_rate
+        # Rolling estimate of per-tick relative volatility, updated from live
+        # BBO moves via update_volatility(). Seeds to the configured sigma so
+        # quotes exist before the first estimate arrives.
+        self._rel_vol = sigma
+
+    def update_volatility(self, mid_price: float) -> float:
+        """Feeds the latest mid into an EW estimate of per-tick relative volatility.
+
+        A-S requires sigma in price units per period; measuring it as a
+        *fraction* of mid makes the model portable across assets priced at
+        0.013 vs 33,000 without per-symbol tuning.
+        """
+        if mid_price <= 0:
+            return self._rel_vol
+        if not hasattr(self, "_last_mid"):
+            self._last_mid = mid_price
+            return self._rel_vol
+        if self._last_mid > 0:
+            ret = abs(mid_price - self._last_mid) / self._last_mid
+            # EWMA with alpha ~ 0.05: reactive but not noisy
+            self._rel_vol = 0.95 * self._rel_vol + 0.05 * (ret * 10.0)  # scale: per ~10-tick sigma
+        self._last_mid = mid_price
+        return self._rel_vol
 
     def calculate_reservation_price(self, mid_price: float, current_inventory: int) -> float:
         """Computes the reservation (indifference) price r(s, q).
         r(s, q) = s - q * gamma * sigma^2 * (T - t)
         When long (q > 0), reservation price drops below mid to encourage selling.
         When short (q < 0), reservation price rises above mid to encourage buying.
+        sigma is interpreted as RELATIVE vol; the penalty is therefore computed
+        in relative terms and re-scaled by mid so it stays meaningful at any
+        price magnitude.
         """
-        inventory_penalty = current_inventory * self.gamma * (self.sigma ** 2) * self.T_minus_t
-        return mid_price - inventory_penalty
+        rel_penalty = current_inventory * self.gamma * (self._rel_vol ** 2) * self.T_minus_t
+        return mid_price * (1.0 - rel_penalty)
 
     def calculate_optimal_quotes(
         self,
@@ -64,11 +90,23 @@ class AvellanedaStoikovModel:
         res_price = self.calculate_reservation_price(mid_price, current_inventory)
 
         # 2. Optimal Half-Spread (Avellaneda & Stoikov 2008 closed-form solution)
-        # delta = (1 / gamma) * ln(1 + gamma / kappa)
-        term = 1.0 + (self.gamma / max(0.001, self.kappa))
-        half_spread = (1.0 / self.gamma) * math.log(term)
-        # Normalize half-spread in price terms
-        half_spread_px = (half_spread / 10000.0) * mid_price
+        #     delta_bw + delta_a = (1/gamma) * ln(1 + gamma/kappa) + gamma*sigma^2*(T-t)
+        #     Per the paper the half-spread has TWO terms: the fill-intensity
+        #     term (1/gamma)*ln(1+gamma/kappa) and the volatility term
+        #     gamma*sigma^2*(T-t). With sigma measured RELATIVELY, both terms
+        #     are in relative units and are converted to price via mid.
+        #     NOTE on kappa calibration: with relative-unit outputs, kappa must
+        #     be large (order 1e3) so the fill term lands in single-digit bps.
+        #     kappa=1.5 would imply a 64% half-spread, which is meaningless.
+        fill_term = (1.0 / self.gamma) * math.log(1.0 + self.gamma / max(0.001, self.kappa))
+        vol_term = self.gamma * (self._rel_vol ** 2) * self.T_minus_t
+        half_spread_rel = 0.5 * (fill_term + vol_term)
+        half_spread_px = half_spread_rel * mid_price
+
+        # Competitiveness cap: a market maker never quotes wider than the
+        # current market spread — beyond it the order can never fill and only
+        # adds queue risk. Cap the half-spread at the observed full spread.
+        half_spread_px = min(half_spread_px, market_spread)
 
         target_bid = res_price - half_spread_px
         target_ask = res_price + half_spread_px

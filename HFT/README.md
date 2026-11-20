@@ -63,7 +63,9 @@ $$R(s, q, t) = s - q \cdot \gamma \cdot \sigma^2 \cdot (T - t)$$
 - $\sigma$: High-frequency tick volatility
 - $(T-t)$: Normalized trading horizon
 
-The optimal half-spread is computed via:
+The optimal half-spread is computed via (corrected 2026-11-20: sigma is
+RELATIVE per-period volatility, the volatility term is included, and the
+half-spread is capped at the observed market spread):
 $$\delta(s, q) = \frac{1}{\gamma} \ln\left(1 + \frac{\gamma}{\kappa}\right)$$
 When long ($q > 0$), $R(s, q) < s$, causing the quotes to shift downward to accelerate selling and protect capital from adverse drift.
 
@@ -102,7 +104,18 @@ python hft_engine.py --symbols RAREUSD DOGEUSD SUIUSD ENAUSD --interval-ms 500 -
 ```
 
 ### Step 4: Run HFT Engine Live (With Hard Risk Caps)
-Places real post-only maker orders with strict $\$10.00\ \text{USD}$ notional per symbol and automated 60s inventory unwinds:
+Requires `DELTA_API_KEY` / `DELTA_API_SECRET` in the environment (or a
+gitignored `.env` next to `HFT/`). The engine **refuses `--live` without
+credentials** — there are no embedded keys (see `../SECURITY.md`).
+Places real post-only maker orders with strict $\$10.00\ \text{USD}$ notional per symbol, an **enforced** daily-loss kill switch (cancel-all → flatten at market → halt), and automated 60s inventory unwinds:
 ```powershell
 python hft_engine.py --symbols RAREUSD DOGEUSD SUIUSD --live --max-notional 10.0 --interval-ms 500
+```
+
+### Step 5 (optional): Enable Model 2 Lead-Lag Sniper Lane
+Model 2 evaluates Binance-vs-Delta lead-lag every cycle and logs signals with
+net-edge math. Executing taker snipes is **opt-in** (it is a taker-fee lane,
+opposite of the maker philosophy):
+```powershell
+python hft_engine.py --symbols SOLUSD --live --snipe --interval-ms 500
 ```

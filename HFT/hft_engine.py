@@ -30,6 +30,7 @@ sys.path.append(str(HFT_ROOT))
 
 from core.delta_client import DeltaClient
 from core.orderbook import L2OrderBook
+from core.binance_feed import BinanceFuturesFeed
 from models.model1_avellaneda_stoikov import AvellanedaStoikovModel
 from models.model2_binance_lead_lag import BinanceDeltaLeadLagModel
 from models.model3_ofi_microstructure import OrderFlowImbalanceModel
@@ -52,9 +53,11 @@ class HFTEngine:
         max_notional_per_symbol: float = 5.0,
         daily_loss_limit_usd: float = 5.0,
         quote_refresh_sec: float = 15.0,
+        snipe: bool = False,
     ):
         self.symbols = symbols
         self.live = live
+        self.snipe = snipe  # Model 2 taker lane: OFF unless explicitly enabled
         self.order_size = order_size
         self.max_notional_per_symbol = max_notional_per_symbol
         self.daily_loss_limit_usd = daily_loss_limit_usd
@@ -65,8 +68,10 @@ class HFTEngine:
         self.product_specs: Dict[str, Dict[str, Any]] = {}
 
         # Instantiate Models per Symbol
+        # kappa calibrated for RELATIVE-unit A-S outputs: (1/gamma)*ln(1+gamma/kappa)
+        # must land in single-digit bps, i.e. kappa ~ O(1e3). See model docstring.
         self.m1_models: Dict[str, AvellanedaStoikovModel] = {
-            s: AvellanedaStoikovModel(s, gamma=0.1, sigma=0.015, kappa=1.5, max_inventory=2, min_spread_bps=4.0)
+            s: AvellanedaStoikovModel(s, gamma=0.1, sigma=0.002, kappa=2000.0, max_inventory=2, min_spread_bps=4.0)
             for s in symbols
         }
         self.m2_models: Dict[str, BinanceDeltaLeadLagModel] = {
@@ -83,6 +88,7 @@ class HFTEngine:
         self.entry_prices: Dict[str, float] = {s: 0.0 for s in symbols}
         # Binance reference mids for Model 2 lead-lag (symbol -> mid), fed by BinanceFuturesFeed
         self.reference_prices: Dict[str, Optional[float]] = {s: None for s in symbols}
+        self.binance_feed: Optional[BinanceFuturesFeed] = None
         # Active orders structure: {symbol: {"buy": {"id": int, "price": float, "ts": float}, "sell": ...}}
         self.active_orders: Dict[str, Dict[str, Optional[Dict[str, Any]]]] = {
             s: {"buy": None, "sell": None} for s in symbols
@@ -130,12 +136,37 @@ class HFTEngine:
                 }
                 logger.info(f"  [SPEC] {sym} | ID: {p.get('id')} | Tick: {tick_str} | ContractVal: {contract_val}")
 
+        # Start the Binance reference feed for Model 2 lead-lag evaluation.
+        # on_tick routes each Binance mid into reference_prices keyed by the
+        # Delta symbol (both mapped and raw base). Feed failures degrade to
+        # Model-2-silent: the engine keeps market making on Delta book data.
+        def _on_ref_tick(base: str, price: float, ts: float):
+            for s in self.symbols:
+                base_delta = s[:-3] if s.endswith("USD") else s  # BTCUSD -> BTC
+                if base_delta == base:
+                    self.reference_prices[s] = price
+        try:
+            self.binance_feed = BinanceFuturesFeed(
+                [s[:-3] if s.endswith("USD") else s for s in self.symbols]
+            )
+            self.binance_feed.on_tick(_on_ref_tick)
+            asyncio.create_task(self.binance_feed.start())
+            logger.info(f"Binance reference feed subscribing: {[s[:-3] + 'USDT' for s in self.symbols]}")
+        except Exception as e:
+            logger.warning(f"Binance reference feed unavailable ({e}); Model 2 lead-lag stays silent.")
+
         # Ingest existing positions
         await self.sync_positions()
         logger.info(f"Starting inventories: {self.inventories}")
         logger.info("HFT Engine Initialized Successfully.\n")
 
     async def sync_positions(self):
+        # Dry-run / anonymous mode: authenticated endpoints would 401 (or worse,
+        # raise inside HMAC signing when the secret is None). Position sync is
+        # only meaningful when credentials exist; the kill switch likewise
+        # only guards real inventory.
+        if not (self.client.api_key and self.client.api_secret):
+            return
         try:
             positions = await self.client.get_positions()
             for p in positions:
@@ -233,9 +264,22 @@ class HFTEngine:
                     f"net edge {m2_sig['net_edge_bps']:.1f} bps | {m2_sig['reason']}"
                 )
                 self.stats["lead_lag_signals"] = self.stats.get("lead_lag_signals", 0) + 1
-                # Sniper lane (taker) is intentionally NOT auto-fired in this
-                # build: signals are logged for operator review. Suppressing
-                # the stale-side maker quote is the safe institutional default.
+                # Sniper lane: executes taker IOCs ONLY when the operator has
+                # explicitly opted in via --snipe. Default remains log-only.
+                if self.snipe and self.live:
+                    try:
+                        res = await self.client.place_order(
+                            symbol=symbol,
+                            size=self.order_size,
+                            side=m2_sig["side"],
+                            limit_price=m2_sig["action_price"],
+                            post_only=False,
+                            time_in_force="ioc",
+                        )
+                        self.stats["snipes_fired"] = self.stats.get("snipes_fired", 0) + 1
+                        logger.info(f"🏹 [SNIPE EXECUTED] {symbol} {m2_sig['side'].upper()} @ {m2_sig['action_price']} -> order {res.get('id')}")
+                    except Exception as e:
+                        logger.error(f"Snipe order failed on {symbol}: {e}")
 
         # ----------------- Check Model 3: OFI Microstructure -----------------
         ofi_sig = self.m3_models[symbol].update_book(
@@ -248,6 +292,9 @@ class HFTEngine:
             logger.info(f"⚡ [OFI DRIFT TRIGGER] {symbol}: Z={ofi_sig['ofi_zscore']:.2f} | Imbalance: {ofi_sig['imbalance_ratio']:.2f}")
 
         # ----------------- Check Model 1: Avellaneda-Stoikov Market Maker -----------------
+        # Feed live mid into the EW relative-vol estimate first so reservation
+        # price and half-spread adapt to each asset's own noise level.
+        self.m1_models[symbol].update_volatility(mid)
         m1_quotes = self.m1_models[symbol].calculate_optimal_quotes(
             mid_price=mid,
             current_inventory=inv,
@@ -391,6 +438,8 @@ class HFTEngine:
         logger.info("GRACEFULLY SHUTTING DOWN HFT EXECUTION ENGINE")
         logger.info("=" * 70)
         self.running = False
+        if self.binance_feed is not None:
+            self.binance_feed.stop()
         if self.live:
             logger.info("Cancelling all resting maker orders placed by engine...")
             for s in self.symbols:
@@ -424,6 +473,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Delta Exchange India High-Frequency Trading Engine")
     parser.add_argument("--symbols", nargs="+", default=["RAREUSD", "PIPPINUSD"], help="Target perpetual symbols")
     parser.add_argument("--live", action="store_true", help="Execute real live orders (default: Dry Run)")
+    parser.add_argument("--snipe", action="store_true", help="Enable Model 2 lead-lag taker sniping (requires --live)")
     parser.add_argument("--size", type=int, default=1, help="Contract order size per quote")
     parser.add_argument("--max-notional", type=float, default=5.0, help="Max notional risk per symbol in USD")
     parser.add_argument("--interval-ms", type=int, default=500, help="Polling cycle interval in milliseconds")
@@ -433,11 +483,15 @@ def parse_args():
 
 async def main():
     args = parse_args()
+    if args.snipe and not args.live:
+        parser.error("--snipe requires --live (sniping is a taker strategy and cannot run in dry-run)")
+
     engine = HFTEngine(
         symbols=args.symbols,
         live=args.live,
         order_size=args.size,
         max_notional_per_symbol=args.max_notional,
+        snipe=args.snipe,
     )
     await engine.initialize()
 
