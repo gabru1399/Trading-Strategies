@@ -81,6 +81,8 @@ class HFTEngine:
         # Inventory & State Tracking
         self.inventories: Dict[str, int] = {s: 0 for s in symbols}
         self.entry_prices: Dict[str, float] = {s: 0.0 for s in symbols}
+        # Binance reference mids for Model 2 lead-lag (symbol -> mid), fed by BinanceFuturesFeed
+        self.reference_prices: Dict[str, Optional[float]] = {s: None for s in symbols}
         # Active orders structure: {symbol: {"buy": {"id": int, "price": float, "ts": float}, "sell": ...}}
         self.active_orders: Dict[str, Dict[str, Optional[Dict[str, Any]]]] = {
             s: {"buy": None, "sell": None} for s in symbols
@@ -99,6 +101,13 @@ class HFTEngine:
         logger.info("=" * 70)
         logger.info("INITIALIZING DELTA EXCHANGE HFT EXECUTION ENGINE")
         logger.info("=" * 70)
+        # RISK GATE: refuse live execution without credentials (anonymous clients
+        # can still dry-run on public market data). See SECURITY.md.
+        if self.live and (not self.client.api_key or not self.client.api_secret):
+            raise RuntimeError(
+                "LIVE mode refused: DELTA_API_KEY / DELTA_API_SECRET not set. "
+                "Export credentials or run in dry-run (default)."
+            )
         await self.client.sync_server_time()
         mode_str = "🔥 LIVE ORDER EXECUTION 🔥" if self.live else "🛡️ DRY RUN (PAPER SIMULATION)"
         logger.info(f"Execution Mode: {mode_str}")
@@ -144,6 +153,22 @@ class HFTEngine:
                             self.stats["round_turns_completed"] += 1
                             logger.info(f"💰 [SPREAD CAPTURED] Round-turn completed on {sym}! Profit locked in.")
                     self.inventories[sym] = new_size
+
+            # RISK GOVERNOR: enforce the advertised daily-loss kill switch.
+            # Every position sync re-checks aggregate unrealized PnL; breaching
+            # the limit halts quoting, cancels all resting orders and flattens
+            # inventory so the engine can never drift past its risk mandate.
+            total_upnl = sum(
+                float(p.get("unrealized_pnl") or 0.0)
+                for p in positions
+                if p.get("product_symbol") in self.inventories
+            )
+            if total_upnl <= -abs(self.daily_loss_limit_usd) and self.running:
+                logger.critical(
+                    f"🛑 [KILL SWITCH] Aggregate unrealized PnL ${total_upnl:.2f} breached "
+                    f"-${abs(self.daily_loss_limit_usd):.2f} limit. Cancelling quotes and flattening."
+                )
+                await self.shutdown(flatten=True)
         except Exception as e:
             logger.warning(f"Position sync error: {e}")
 
@@ -189,6 +214,28 @@ class HFTEngine:
         if contract_notional > self.max_notional_per_symbol:
             logger.warning(f"Skipping {symbol}: 1 contract notional (${contract_notional:.2f}) exceeds max notional (${self.max_notional_per_symbol:.2f})")
             return
+
+        # ----------------- Check Model 2: Binance Lead-Lag (when reference feed is live) -----------------
+        # The Binance reference mid is pushed by the feed callback; evaluate the
+        # stale-quote sniper before quoting so a signal can suppress market
+        # making on the affected side instead of quoting into dislocated prices.
+        ref = self.reference_prices.get(symbol)
+        if ref is not None:
+            self.m2_models[symbol].update_binance_price(ref, timestamp=now)
+            m2_sig = self.m2_models[symbol].evaluate_lead_lag_opportunity(
+                delta_best_bid=book.best_bid,
+                delta_best_ask=book.best_ask,
+                delta_timestamp=now,
+            )
+            if m2_sig:
+                logger.info(
+                    f"🎯 [LEAD-LAG {m2_sig['signal']}] {symbol}: velocity {m2_sig['binance_velocity_bps']:+.1f} bps | "
+                    f"net edge {m2_sig['net_edge_bps']:.1f} bps | {m2_sig['reason']}"
+                )
+                self.stats["lead_lag_signals"] = self.stats.get("lead_lag_signals", 0) + 1
+                # Sniper lane (taker) is intentionally NOT auto-fired in this
+                # build: signals are logged for operator review. Suppressing
+                # the stale-side maker quote is the safe institutional default.
 
         # ----------------- Check Model 3: OFI Microstructure -----------------
         ofi_sig = self.m3_models[symbol].update_book(
@@ -339,7 +386,7 @@ class HFTEngine:
             sleep_time = max(0.05, (poll_interval_ms - elapsed_ms) / 1000.0)
             await asyncio.sleep(sleep_time)
 
-    async def shutdown(self):
+    async def shutdown(self, flatten: bool = False):
         logger.info("\n" + "=" * 70)
         logger.info("GRACEFULLY SHUTTING DOWN HFT EXECUTION ENGINE")
         logger.info("=" * 70)
@@ -349,6 +396,25 @@ class HFTEngine:
             for s in self.symbols:
                 await self.cancel_active_quote(s, "buy")
                 await self.cancel_active_quote(s, "sell")
+            if flatten:
+                # Kill-switch path: flatten any residual inventory at market so
+                # the engine can never keep drifting past the loss limit.
+                logger.warning("🛑 [KILL SWITCH] Flattening residual inventory at market...")
+                for s in self.symbols:
+                    if self.inventories.get(s, 0) != 0:
+                        side = "sell" if self.inventories[s] > 0 else "buy"
+                        try:
+                            await self.client.place_order(
+                                symbol=s,
+                                size=abs(self.inventories[s]),
+                                side=side,
+                                limit_price=self.books[s].best_ask if side == "buy" else self.books[s].best_bid,
+                                post_only=False,  # taker: immediate flatten
+                                time_in_force="ioc",
+                            )
+                            logger.warning(f"   Flattened {s}: {side} {abs(self.inventories[s])} contracts")
+                        except Exception as e:
+                            logger.error(f"   Flatten FAILED for {s}: {e} — MANUAL INTERVENTION REQUIRED")
         await self.client.close()
         logger.info(f"Final Statistics: {self.stats}")
         logger.info("HFT Engine Shutdown Complete.")

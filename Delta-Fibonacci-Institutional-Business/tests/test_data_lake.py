@@ -5,6 +5,14 @@ import pytest
 import pandas as pd
 import numpy as np
 
+# The Blueberry_Data parquet lake is a gitignored local dump (see .gitignore);
+# these tests can only run on the Windows host that dumped the data.
+pytestmark = pytest.mark.skipif(
+    not os.path.isdir("Blueberry_Data"),
+    reason="local parquet data lake not present (gitignored, Windows host only)",
+)
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "Blueberry_Data")
 

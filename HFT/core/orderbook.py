@@ -3,7 +3,7 @@ High-speed in-memory Level 2 orderbook model with microstructure analytics.
 Calculates mid-price, basis point spread, depth imbalance, and volume-weighted micro-price.
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 import numpy as np
 
 

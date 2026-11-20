@@ -23,7 +23,11 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Tuple
 import pandas as pd
-import MetaTrader5 as mt5
+
+try:
+    import MetaTrader5 as mt5  # Windows-only; optional so CI/test environments can import the module
+except ImportError:  # pragma: no cover - exercised only on non-Windows hosts
+    mt5 = None
 
 logger = logging.getLogger("KaizenEngine")
 
@@ -66,6 +70,9 @@ def evaluate_kaizen_trade_attribution(lookback_days: int = 7) -> Dict[str, Any]:
     """Forensically attributes every closed deal to its (Symbol, TF, Setup) factor,
     evaluates statistical expectancy, and updates the active Quarantine Avoidance list.
     """
+    if mt5 is None:
+        logger.error("MetaTrader5 not available on this host; Kaizen attribution is MT5-only")
+        return {"ok": False, "error": "MetaTrader5 not available (Windows-only dependency)"}
     if not mt5.initialize():
         logger.error("MT5 initialization failed in Kaizen evaluator")
         return {"ok": False, "error": "MT5 init failed"}

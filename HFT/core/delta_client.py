@@ -38,12 +38,11 @@ def _load_env_credentials():
                             api_secret = line.split("=", 1)[1].strip().strip('"').strip("'")
             except Exception:
                 pass
-    # Fallback to defaults
-    if not api_key:
-        api_key = "RrPSJVABou8UAT4BIl5ExCctYWV6dp"
-    if not api_secret:
-        api_secret = "1a0HWlsQfoeyv7J0rPx5mXWP0rEoL85RCWxUQmsI06aMS65cuQOhcUwjAiks"
-    return api_key, api_secret
+    # SECURITY: no hardcoded fallback credentials. When both are missing the
+    # client stays anonymous (public market data only) and the engine MUST
+    # refuse --live execution. See SECURITY.md.
+    return api_key, api_secret  # may be (None, None)
+
 
 _DEF_KEY, _DEF_SEC = _load_env_credentials()
 API_KEY_DEFAULT = _DEF_KEY

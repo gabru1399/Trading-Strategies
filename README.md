@@ -61,3 +61,22 @@ Trading-Strategies/
 ## 📄 License & Attribution
 
 Proprietary quantitative research and algorithmic trading platform maintained by **kbsingh1399**.
+
+---
+
+## 🔒 Security & Reliability (2026-11-20 hardening)
+
+- **Credential hygiene**: exchange API keys are loaded exclusively from the
+  environment / gitignored `.env` — never hardcoded. The HFT engine refuses
+  `--live` execution without credentials. See [`SECURITY.md`](SECURITY.md) —
+  **rotate any key that was ever committed**.
+- **Risk governors, enforced**: the HFT daily-loss kill switch now actually
+  fires (cancel-all → flatten → halt), covered by regression tests.
+- **CI**: `docs/ci-workflow.yml` (ready-to-activate workflow: copy to
+  `.github/workflows/ci.yml` and commit — contributor tokens cannot create
+  workflow files). Runs both Python suites on every push/PR plus a gitleaks
+  secret scan.
+- Full findings: [`INSTITUTIONAL_AUDIT_REPORT.md`](INSTITUTIONAL_AUDIT_REPORT.md).
+
+**Test status**: HFT `10 passed` · Delta-Fibonacci `37 passed, 32 skipped`
+(Windows-only / optional-dependency guards).

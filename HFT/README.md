@@ -11,6 +11,12 @@ Standard         : Quantitative Proprietary Trading (Jane Street, Citadel, Jump 
 
 ## 1. Executive Summary & Verified Live Market Edge
 
+> **Data provenance**: the spread / basis figures below were measured in a
+> single scan session pinned in `research/live_edge_discovery_results.json`
+> (rerunnable via `python research/live_edge_discovery.py`). Microstructure
+> edges decay — re-run the scanner before allocating capital, and treat these
+> numbers as a snapshot, not a standing property of the venues.
+
 During our live multi-venue market scan across the 262 perpetual contracts listed on Delta Exchange India, we discovered **two distinct, empirically verified statistical edges**:
 
 1. **Spread Capture via Avellaneda-Stoikov Market Making (Model 1)**:

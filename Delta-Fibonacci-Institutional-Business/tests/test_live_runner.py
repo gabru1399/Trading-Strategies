@@ -204,6 +204,7 @@ def test_adaptive_lot_sizing_winning_asset_and_champion():
     account = MockAccount()
 
     # For EURUSD (Forex), mock margin calculation returns low margin (~$73)
+    pytest.importorskip("MetaTrader5")  # Windows-only
     import MetaTrader5 as mt5
     original_calc = mt5.order_calc_margin
     try:
@@ -236,6 +237,7 @@ def test_adaptive_lot_sizing_high_margin_safety_cap():
     info = MockSymbolInfo()
     account = MockAccount()
 
+    pytest.importorskip("MetaTrader5")  # Windows-only
     import MetaTrader5 as mt5
     original_calc = mt5.order_calc_margin
     try:
@@ -287,6 +289,7 @@ def test_adaptive_lot_sizing_unranked_setup():
 
 @pytest.mark.parametrize("risk,margin,should_send", [(5.0, 20.0, True), (7.0, 20.0, False), (5.0, None, False)])
 def test_pending_placement_risk_and_ack(tmp_path, monkeypatch, risk, margin, should_send):
+    pytest.importorskip("MetaTrader5")  # Windows-only
     import MetaTrader5 as mt5
 
     login = 12345

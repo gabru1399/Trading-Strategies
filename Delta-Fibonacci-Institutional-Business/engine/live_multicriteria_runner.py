@@ -19,7 +19,10 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 import numpy as np
 import pandas as pd
-import MetaTrader5 as mt5
+try:
+    import MetaTrader5 as mt5  # Windows-only; optional so CI/test environments can import the module
+except ImportError:  # pragma: no cover - exercised only on non-Windows hosts
+    mt5 = None
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
@@ -52,12 +55,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger("MultiCriteriaTrader")
 
-TIMEFRAME_MAP = {
-    "5M": mt5.TIMEFRAME_M5,
-    "15M": mt5.TIMEFRAME_M15,
-    "1H": mt5.TIMEFRAME_H1,
-    "4H": mt5.TIMEFRAME_H4,
-}
+# MT5 timeframe constants mirrored locally so this module imports on hosts
+# without MetaTrader5 (CI). _tf_map() rebinds to the real enums on Windows.
+_TF_CONSTANTS = {"5M": 5, "15M": 15, "1H": 16385, "4H": 16388}  # MT5 TIMEFRAME_M5/M15/H1/H4
+
+
+def _tf_map() -> Dict[str, Any]:
+    """Return the MT5 timeframe enum map, degrading to raw constants off-Windows."""
+    if mt5 is None:
+        return dict(_TF_CONSTANTS)
+    return {
+        "5M": mt5.TIMEFRAME_M5,
+        "15M": mt5.TIMEFRAME_M15,
+        "1H": mt5.TIMEFRAME_H1,
+        "4H": mt5.TIMEFRAME_H4,
+    }
+
+
+TIMEFRAME_MAP = _tf_map()
 
 TIMEFRAME_SECONDS = {
     "5M": 300,
