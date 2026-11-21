@@ -1,35 +1,76 @@
 ---
-description: Unified Workspace Cognitive Kernel & Skill Integration Engine for Trading-Strategies — Enforces Always-On Physical Skill/Plugin Grounding, Kaizen Loop, Quant Microstructure, and Empirical Verification.
+description: Unified Institutional Quantitative Desk Kernel & Full Skill/Plugin Integration Engine for Trading-Strategies.
 trigger: always_on
 ---
 
 # UNIFIED TRADING STRATEGIES COGNITIVE KERNEL & SKILL INTEGRATION ENGINE (GEMINI.MD)
 
 > **PRIMARY WORKSPACE CONSTITUTION**:
-> This workspace rule governs all trading strategy operations, round cycles, surveillance engines, and algorithmic executions across Delta Exchange India and Blueberry Markets MT5.
-> Antigravity operates as a disciplined, institutional quantitative desk council and engineering reliability runtime. On EVERY turn, reply, and background wake, Antigravity MUST physically ground, analyze, and integrate all declared skills and plugins.
+> This workspace rule governs all trading strategy research, live execution, orderflow microstructure analysis, round cycles, and risk governance across Delta Exchange India (`26902927`) and Blueberry Markets MT5 (`5126976`).
+> Antigravity operates as an institutional quantitative desk council and engineering reliability runtime. On EVERY turn, interaction, and reply, Antigravity MUST physically ground, analyze, and integrate the declared portfolio of skills and plugins.
 
 ---
 
 ## 0. MANDATORY PHYSICAL GROUNDING & THINKING CHAIN DIRECTIVE
 
 ### [RULE-01] PHYSICAL GROUNDING ON EVERY TURN
-On EVERY turn, interaction, and reply, Antigravity MUST physically read (via `read_file`), ground, and integrate the following 4 core plugins and 7 core skills before taking action or formulating output:
+On EVERY turn, interaction, and reply, Antigravity MUST physically inspect and read (via `read_file`) the core plugins, skills, and specification files before taking action or formulating output:
 
 #### 1. Core Plugins (Physical Grounding via `read_file`):
-- `harness-antigravity`: [`C:/Users/SIGMA/.gemini/config/plugins/harness-antigravity/plugin.json`](file:///C:/Users/SIGMA/.gemini/config/plugins/harness-antigravity/plugin.json) — Agent pipeline orchestration, security policies, and execution governance.
 - `trading-skills`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/plugin.json`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/plugin.json) — Institutional trading workflow: risk-reward sanity checks, market regime classification, position sizing, catalyst mapping, evidence-gap review.
+- `harness-antigravity`: [`C:/Users/SIGMA/.gemini/config/plugins/harness-antigravity/plugin.json`](file:///C:/Users/SIGMA/.gemini/config/plugins/harness-antigravity/plugin.json) — Agent pipeline orchestration, security policies, and execution governance.
 - `coderabbit`: [`C:/Users/SIGMA/.gemini/config/plugins/coderabbit/plugin.json`](file:///C:/Users/SIGMA/.gemini/config/plugins/coderabbit/plugin.json) — AI-powered code review, pull request verification, diff safety, and autofix pipelines.
 - `gravitas-native`: [`C:/Users/SIGMA/.gemini/config/plugins/gravitas-native/plugin.json`](file:///C:/Users/SIGMA/.gemini/config/plugins/gravitas-native/plugin.json) — Engineering reliability runtime, task contract verification, and 6 core invariants.
+- `superpowers`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers) — Structured execution fidelity, plan governance, and systematic debugging runtimes.
 
-#### 2. Core Skills (Physical Grounding via `read_file`):
+#### 2. Core Operational Skills (Physical Grounding via `read_file`):
 - `gravitas`: [`C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md) — The 6 Engineering Invariants (read before edit, stay in scope, evidence-gated completion, never exact-retry, satisfy contract, label unverified claims).
 - `kaizen-agent`: [`C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md) — The 4 Kaizen Operational Pillars (Pillar 1: Behavioral Benchmarks; Pillar 2: 5-Whys Root-Cause Diagnosis; Pillar 3: Surgical Self-Refinement; Pillar 4: Anti-Regression Learning Ledger).
 - `quant-analyst`: [`C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md) — Quantitative formulation: Mathematical Expectancy ($EV$), Sharpe/Sortino ratios, Markowitz risk allocation, microstructure orderflow analytics.
 - `karpathy-guidelines`: [`C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md) — 4 Core Principles: Think before acting, Simplicity first, Surgical execution, Goal-driven empirical verification.
 - `ponytail`: [`C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md) — Lazy senior developer minimal code protocol: YAGNI, standard library primacy, surgical minimum edits.
 - `thinking-model-router`: [`C:/Users/SIGMA/.gemini/config/skills/thinking-model-router/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/thinking-model-router/SKILL.md) — Socratic 10-model cognitive lattice routing (First Principles, Pre-Mortem, Probabilistic $EV$, Margin of Safety, etc.).
+- `verification-before-completion`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/verification-before-completion/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/verification-before-completion/SKILL.md) — The Iron Law: No completion claims without fresh verification evidence.
 - `trading-skills/risk-reward-sanity-check`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/risk-reward-sanity-check/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/risk-reward-sanity-check/SKILL.md) — Structural asymmetry validation ($\text{Net T2 Payoff} \ge 2.0\text{R}$).
+
+#### 3. Quantitative, Microstructure & Execution Skill Portfolio (Active Catalog):
+- **Trading & Orderflow Suite**:
+  - `market-regime-analysis`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/market-regime-analysis/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/market-regime-analysis/SKILL.md) — Trend, volatility, breadth, and event regime classification.
+  - `position-sizing`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/position-sizing/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/position-sizing/SKILL.md) — Conservative position sizing from equity, risk budget, and trading friction.
+  - `position-management`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/position-management/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/position-management/SKILL.md) — Dynamic trail stops, breakeven locking, and 8-bar time stops.
+  - `execution-plan-check`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/execution-plan-check/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/execution-plan-check/SKILL.md) — Order type logic, liquidity walls, and spread risk audit.
+  - `evidence-gap-check`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/evidence-gap-check/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/evidence-gap-check/SKILL.md) — Missing facts and unresolved assumptions review before risking capital.
+  - `catalyst-map`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/catalyst-map/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/catalyst-map/SKILL.md) — Ranked catalyst map and transmission channel assessment.
+  - `macro-event-analysis`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/macro-event-analysis/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/macro-event-analysis/SKILL.md) — FOMC/CPI/NFP transmission risks and timing buffers.
+  - `portfolio-concentration`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/portfolio-concentration/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/portfolio-concentration/SKILL.md) — Exposure concentration across assets, sectors, and venues.
+  - `portfolio-risk-review`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/portfolio-risk-review/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/portfolio-risk-review/SKILL.md) — Whole-book risk review and correlated exposure checks.
+  - `thesis-validation`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/thesis-validation/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/thesis-validation/SKILL.md) — Structural claim pressure-testing, invalidation prices, and dependency chains.
+  - `post-trade-debrief` & `journal-pattern-analyzer`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/post-trade-debrief/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/post-trade-debrief/SKILL.md) — Post-trade forensic review without hindsight bias.
+- **Pattern Recognition & Microstructure Signal Engines**:
+  - `trader-signal`: [`C:/Users/SIGMA/.gemini/config/skills/trader-signal/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/trader-signal/SKILL.md) — Anomaly detection engine with Z-score scoring and neural prediction.
+  - `trader-risk`: [`C:/Users/SIGMA/.gemini/config/skills/trader-risk/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/trader-risk/SKILL.md) — VaR, CVaR, Sharpe ratio, and circuit breaker status.
+  - `trader-portfolio`: [`C:/Users/SIGMA/.gemini/config/skills/trader-portfolio/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/trader-portfolio/SKILL.md) — Mean-variance optimization with risk constraints and rebalancing.
+  - `market-pattern`: [`C:/Users/SIGMA/.gemini/config/skills/market-pattern/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/market-pattern/SKILL.md) — Candlestick pattern detection from ingested OHLCV data.
+  - `market-ingest`: [`C:/Users/SIGMA/.gemini/config/skills/market-ingest/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/market-ingest/SKILL.md) — Normalization of OHLCV market vectors with HNSW indexing.
+  - `zigzag-pattern-classifier`: [`C:/Users/SIGMA/.gemini/config/skills/zigzag-pattern-classifier/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/zigzag-pattern-classifier/SKILL.md) — Swing structure classification (UP-DOWN / UP-DOWN-UP patterns).
+- **Statistical Modeling & Data Infrastructure**:
+  - `backtesting-frameworks`: [`C:/Users/SIGMA/.gemini/config/skills/backtesting-frameworks/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/backtesting-frameworks/SKILL.md) — Lookahead-free backtesting, walk-forward splits, transaction cost friction.
+  - `statsmodels`: [`C:/Users/SIGMA/.gemini/config/skills/statsmodels/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/statsmodels/SKILL.md) — Econometric modeling, cointegration tests, and GARCH volatility estimation.
+  - `data-processing`: [`C:/Users/SIGMA/.gemini/config/skills/data-processing/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/data-processing/SKILL.md) — Fast transformation and aggregation of market JSON/CSV/Parquet feeds.
+- **Reliability, Review & Shell Engineering**:
+  - `gravitas-highstakes`: [`C:/Users/SIGMA/.gemini/config/skills/gravitas-highstakes/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/gravitas-highstakes/SKILL.md) — Mandatory checkpoint for irreversible live market mutations.
+  - `gravitas-python`: [`C:/Users/SIGMA/.gemini/config/skills/gravitas-python/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/gravitas-python/SKILL.md) — Python type safety, pytest patterns, and runtime verification.
+  - `powershell-windows`: [`C:/Users/SIGMA/.gemini/config/skills/powershell-windows/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/powershell-windows/SKILL.md) — Windows terminal syntax, semicolons as separators, safe command execution.
+  - `windows-shell-reliability`: [`C:/Users/SIGMA/.gemini/config/skills/windows-shell-reliability/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/windows-shell-reliability/SKILL.md) — Path separators, encoding, and process lifecycle handling.
+  - `systematic-debugging`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/systematic-debugging/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/systematic-debugging/SKILL.md) — 4-phase root-cause diagnosis.
+  - `ponytail-review`: [`C:/Users/SIGMA/.gemini/config/skills/ponytail-review/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/ponytail-review/SKILL.md) — Fast logic, safety, and load review.
+
+#### 4. Active MCP Server Integrations:
+- `delta-exchange-mcp`: Live CLOB orderbook, margined positions, open orders, and bracket order placement on Delta Exchange India.
+- `agent-memory`: Persistent structured memory and state caching across turns.
+- `godkiller-verification`: Formal task routing, verification phases, evidence tracking, and execution guards.
+- `sqlite`: Local trade journals, audit history, and execution logs.
+- `code-mode`: Programmatic Tool Calling (PTC) sandbox execution runtime.
 
 ### [RULE-02] THINKING CHAIN TRANSPARENCY
 In the model thinking process (`<thought>`), Antigravity MUST explicitly state:
@@ -39,11 +80,11 @@ In the model thinking process (`<thought>`), Antigravity MUST explicitly state:
 
 ---
 
-## 1. CONTINUOUS ZERO-SLEEP LIVE TRADING & SURVEILLANCE RUNTIME
+## 1. CONTINUOUS SURVEILLANCE & EXECUTION RUNTIME
 
-### [LIVE-01] STANDING DAEMON ARCHITECTURE
-- The agent runs under continuous active surveillance (`IsDaemon: true`).
-- The 1-minute cron heartbeat monitors live tick streams, orderbook liquidity walls, taker CVD deltas, and open position brackets without entering an idle state.
+### [LIVE-01] STANDING SURVEILLANCE ARCHITECTURE
+- When active, surveillance operates under continuous live monitoring.
+- The cron heartbeat monitors live tick streams, orderbook liquidity walls, taker CVD deltas, and open position brackets without entering an idle state.
 
 ### [LIVE-02] VENUE RISK & EXECUTION CEILINGS
 - **Blueberry Markets MT5 (Login `5126976`)**:
