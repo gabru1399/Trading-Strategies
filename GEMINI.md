@@ -38,6 +38,7 @@ On EVERY turn, interaction, and reply, Antigravity MUST physically inspect and r
 #### 2. Core Operational Skills (Physical Grounding via `read_file`):
 - `gravitas`: [`C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md) — The 6 Engineering Invariants (read before edit, stay in scope, evidence-gated completion, never exact-retry, satisfy contract, label unverified claims).
 - `kaizen-agent`: [`C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md) — The 4 Kaizen Operational Pillars (Pillar 1: Behavioral Benchmarks; Pillar 2: 5-Whys Root-Cause Diagnosis; Pillar 3: Surgical Self-Refinement; Pillar 4: Anti-Regression Learning Ledger).
+- `super-hedge-fund-skill`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md) — Multi-agent hedge fund consensus engine combining quantitative fundamental/technical/valuation analytics with institutional investor personas (Warren Buffett moat/ROE, Cathie Wood disruptive innovation, Michael Burry deep-value contrarian, Peter Lynch PEG/growth).
 - `quant-analyst`: [`C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md) — Quantitative formulation: Mathematical Expectancy ($EV$), Sharpe/Sortino ratios, Markowitz risk allocation, microstructure orderflow analytics.
 - `karpathy-guidelines`: [`C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md) — 4 Core Principles: Think before acting, Simplicity first, Surgical execution, Goal-driven empirical verification.
 - `ponytail`: [`C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md) — Lazy senior developer minimal code protocol: YAGNI, standard library primacy, surgical minimum edits.
@@ -193,3 +194,54 @@ In the model thinking process (`<thought>`), Antigravity MUST explicitly state:
   - Risk Ceilings: Standard candidate ceiling **`$10.00 USD`**; High-Confluence (A+ Grade) authorized up to **`$25.00 USD`**.
   - Mandatory PIT-18 spread clearance: Stop distance must exceed $5\times$ live broker spread.
   - Active runner protection: At $\ge +1.0\text{R}$ excursion, ratchet Stop Loss to Breakeven+.
+
+---
+
+## 7. UNIVERSE SCOPE GOVERNANCE & CURATED SOVEREIGNTY (FIX FOR ATTACHMENT 1)
+
+### 7.1 The Two-Tier Universe Structure
+The desk's universe consists of two clearly separated architectural tiers:
+1. **Tier-1: Curated Sovereign Universe (The Curated 61)**:
+   - **Canonical Source**: `src/lib/universe/curated.ts`.
+   - **Constituents**: 30 crypto USDT-M perps + 28 TradFi USDT-M perps + 3 classic indices.
+   - **Microstructure Telemetry**: 100% active live monitoring with Binance Tier-0 WS tape, top-1000 orderbook walls (`/api/cg/livebook`), cumulative 3d/7d/30d liquidation heatmaps, and taker CVD deltas.
+   - **Execution Authority**: All high-confluence trade formulations, dossiers (Step 5), and order intents (Step 9) are exclusively executed on this Curated 61 universe.
+   - **Audit Verdict**: **100% COMPLETE & FULLY EVALUATED**.
+
+2. **Tier-3: Broker Background Inventory (354 Uncurated Symbols)**:
+   - **Constituents**: The 262 Delta and 150 MT5 broker inventory symbols that are outside the Curated 61.
+   - **Quarantine Policy (Via Negativa & Capital Preservation)**: Because upstream Coinglass orderflow feeds do not provide high-frequency depth, CVD, or liquidation heatmaps for these obscure contracts, they are permanently classified as **Observe-Only Background Inventory**.
+   - **Zero Speculation Rule**: Never place live orders on uncurated assets. The validator (`verify_round_evidence.py`) legitimately reports them as `missing measured funnel inputs` to prevent unhedged or unverified risk. This is an intentional safety gate, not a system failure.
+
+---
+
+## 8. SUPER HEDGE FUND SKILL & MULTI-AGENT INVESTOR CONSENSUS ENGINE (ATTACHMENT 2 INTEGRATION)
+
+> **CORE INTEGRATION**:
+> The desk permanently integrates the **Super Hedge Fund Skill** (`super-hedge-fund-skill`) as a core quantitative and qualitative valuation engine partnering with the 8-Voice Council and 10 Mental Models.
+
+### 8.1 Physical Directory & File Manifest
+- **Skill Root**: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md)
+- **References**:
+  - `references/investor-agents.md`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/references/investor-agents.md`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/references/investor-agents.md) — Investor persona prompts and frameworks (Warren Buffett, Cathie Wood, Michael Burry, Peter Lynch).
+  - `references/analysis-methods.md`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/references/analysis-methods.md`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/references/analysis-methods.md) — Detailed rule-based scoring (Fundamental, Technical, Valuation, Sentiment).
+  - `assets/report-template.md`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/assets/report-template.md`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/assets/report-template.md) — Institutional markdown report template.
+- **Scripts**:
+  - `scripts/analysts.py`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/analysts.py`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/analysts.py) — Rule-based analyst implementations (Fundamental, Technical, Valuation).
+  - `scripts/investor_prompts.py`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/investor_prompts.py`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/investor_prompts.py) — LLM investor persona prompts (Buffett, Wood, Burry, Lynch).
+  - `scripts/report_generator.py`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/report_generator.py`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/report_generator.py) — Markdown report generation with Signal Icons (🟢 Bullish, 🔴 Bearish, 🟡 Neutral).
+  - `scripts/data_fetcher.py`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/data_fetcher.py`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/scripts/data_fetcher.py) — Multi-source data fetching utilities (Yahoo Finance, SEC/financial metrics).
+
+### 8.2 Investor Personas & Consensus Architecture
+| Persona | Investing Style | Core Analytical Focus | Valuation Hurdle |
+|---|---|---|---|
+| **Warren Buffett** | Value / Moat | Circle of competence, economic moat, consistent ROE > 15%, Debt/Equity < 0.5 | Margin of safety > 0 vs intrinsic DCF |
+| **Cathie Wood** | Growth / Innovation | Disruptive innovation (AI, blockchain, robotics), massive TAM, multi-year revenue acceleration | Long-term asymmetric exponential growth |
+| **Michael Burry** | Contrarian / Deep Value | Deep undervaluation (>30% intrinsic gap), bubble detection, asymmetric risk/reward | Shorting overhyped bubbles, buying distressed value |
+| **Peter Lynch** | GARP | Growth at a Reasonable Price, PEG ratio < 1.0, understandable business models | Strong earnings growth at fair multiple |
+
+### 8.3 Integration with the 8-Voice Council (Step 5 Dossiers)
+During Step 5 candidate evaluations, the 4 legendary investor personas and rule-based analyst engines provide complementary fundamental and valuation consensus alongside our 8 microstructure voices:
+1. **Rule-Based Screening**: Fundamental scoring (ROE, margins, debt, revenue growth) and valuation models (DCF, owner earnings).
+2. **Persona Multi-Lens Consensus**: Aggregating Buffett, Wood, Burry, and Lynch votes into a weighted consensus score.
+3. **Microstructure Confluence Binding**: Merging the investor consensus with live order-flow telemetry (CVD, book walls, liquidation sweep shelves) to establish undisputed institutional A+ trade geometry.
