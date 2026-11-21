@@ -26,9 +26,9 @@ The Kernel defines the operating sequence, evidence and admission rules. The num
 >     login: "5126976"
 >     environment: "BlueberryMarketsSVG-Live"
 >     order_type: "pending_limit_bracket"
->     # Operator policy directive authorized $10.00 risk ceiling per trade.
->     # scripts/mt5_order_risk.py HARD_CAP_USD updated to Decimal("10.00").
->     max_risk_usd: 10.00
+>     # Operator policy directive authorized $10.00 standard risk ceiling, and up to $25.00 for verified high-confluence A+ setups.
+>     # scripts/mt5_order_risk.py HARD_CAP_USD updated to Decimal("25.00").
+>     max_risk_usd: 25.00
 > portfolio_invariants:
 >   max_total_heat_pct: 1.0
 >   concurrency_limit_p5_02:
