@@ -35,25 +35,28 @@ print(f"1. Capturing inventories and terminal telemetry for {ROUND_ID} in-proces
 capture(EVIDENCE_DIR, wake, SimpleNamespace(feed="delta-inventory", symbol=None, range=None))
 capture(EVIDENCE_DIR, wake, SimpleNamespace(feed="mt5-inventory", symbol=None, range=None))
 
+import concurrent.futures
+
 # Symbols to capture
 symbols = ["BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "SUI", "SEI", "TRX", "BERA", "ENA", "XAU"]
+
+def _do_capture(arg_tuple):
+    feed, sym, rng = arg_tuple
+    try:
+        capture(EVIDENCE_DIR, wake, SimpleNamespace(feed=feed, symbol=sym, range=rng))
+    except Exception as e:
+        print(f"Notice: capture {feed} {rng or ''} {sym}: {e}")
+
+tasks = []
 for sym in symbols:
     for feed in ["market", "signals", "cvd", "bookwalls", "oi", "liq-live"]:
-        try:
-            capture(EVIDENCE_DIR, wake, SimpleNamespace(feed=feed, symbol=sym, range=None))
-        except Exception as e:
-            print(f"Notice: capture {feed} {sym}: {e}")
+        tasks.append((feed, sym, None))
     for rng in ["3d", "7d", "30d"]:
-        try:
-            capture(EVIDENCE_DIR, wake, SimpleNamespace(feed="liqlevels", symbol=sym, range=rng))
-        except Exception as e:
-            print(f"Notice: capture liqlevels {rng} {sym}: {e}")
+        tasks.append(("liqlevels", sym, rng))
+tasks.append(("stopmap", "BTC", None))
 
-# BTC stopmap
-try:
-    capture(EVIDENCE_DIR, wake, SimpleNamespace(feed="stopmap", symbol="BTC", range=None))
-except Exception as e:
-    print(f"Notice: capture stopmap BTC: {e}")
+with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    list(executor.map(_do_capture, tasks))
 
 print("2. Capturing live broker books (MT5 & Delta)...")
 # Live MT5
