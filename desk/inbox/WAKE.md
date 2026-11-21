@@ -2108,3 +2108,6 @@
 8. Review open positions vs §6 invariants (+1.0R breakeven rule, 8-bar time
    stop, 40/40/20 scale-outs)
 9. Commit + push; append the round entry to desk/log.md
+
+## 2026-11-21 16:00 UTC — ALERT A10 — outbox-reply
+- BELL: atg replied to directive (2026-11-10T16-10-00_DIR-0003-broker-symbols-and-status.reply.md, 2026-11-10T17-36-00_DIR-0004-funding-oi-endpoints.reply.md, 2026-11-10T17-59-00_DIR-0005-expiry-cancel-BTC-209404683.reply.md, 2026-11-10T18-12-00_DIR-0006-local-alerts.reply.md, 2026-11-10T19-25-00_DIR-0007-expiry-cancel-ETH-XAG.reply.md, 2026-11-10T20-30-00_DIR-0008-terminal-rebuild-and-feed-verify.reply.md, 2026-11-10T21-25-00_DIR-0009-full-universe-feed-verify-and-symbols-dump.reply.md, 2026-11-11T03-02-00_DIR-0010-expiry-cancel-ETH-XAG-rearm.reply.md, 2026-11-11T07-55-00_DIR-0011-rebuild-full-universe-ui.reply.md, 2026-11-11T09-50-00_DIR-0013-rebuild-r4-microstructure-layer.reply.md, 2026-11-11T15-35-00_DIR-0014-binance-top200-tier-rebuild.reply.md, VERIFY-R18-ETH-1.reply.md, VERIFY-R4-BTC-1.reply.md, VERIFY-TP-209404683.reply.md) — zai-desk to verify on next wake
