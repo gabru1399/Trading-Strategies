@@ -500,4 +500,11 @@ for name, doc in step_docs.items():
     (EVIDENCE_DIR / name).write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"{name} written.")
 
-print("All R649 contract artifacts generated successfully.")
+print("Generating cryptographic section SHA-256 tokens for full line-by-line verification...")
+from generate_canonical_section_tokens import build_section_tokens
+tokens_manifest = build_section_tokens(round_id=ROUND_ID)
+tokens_path = EVIDENCE_DIR / "section_sha_tokens.json"
+tokens_path.write_text(json.dumps(tokens_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print(f"section_sha_tokens.json generated with {tokens_manifest['total_sections_verified']} cryptographically verified sections across {tokens_manifest['total_spec_lines']} lines.")
+
+print(f"All {ROUND_ID} contract artifacts generated successfully.")

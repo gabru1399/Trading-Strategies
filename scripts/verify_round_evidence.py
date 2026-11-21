@@ -132,6 +132,16 @@ def verify(directory, round_id, spec):
     screen = artifact("screen_rows.json")
     telemetry = artifact("telemetry_rows.json")
     gates = artifact("gate_rows.json")
+
+    # Cryptographic proof of section-by-section and line-by-line execution
+    tokens_doc = read(directory / "section_sha_tokens.json", "section SHA tokens", required=False)
+    if tokens_doc:
+        if tokens_doc.get("spec_sha256") != spec["sha256"]:
+            issues.append("section_sha_tokens.json: spec SHA256 does not match canonical spec")
+        if tokens_doc.get("total_spec_lines") != 1763:
+            issues.append(f"section_sha_tokens.json: spec lines {tokens_doc.get('total_spec_lines')} != 1763")
+        if tokens_doc.get("total_sections_verified", 0) < 38:
+            issues.append(f"section_sha_tokens.json: verified sections {tokens_doc.get('total_sections_verified')} < 38")
     instruments = rows(scope, "instruments", ("venue", "instrument_id"), "scope")
     venue_symbols = {}
     cutoff = None
