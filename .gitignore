@@ -117,6 +117,9 @@ scratch/
 # Union additions (2026-11-21 consolidation): Trading-Strategies is the single
 # source of truth; repo root = CG Order-Flow Terminal, engines are siblings.
 # ---------------------------------------------------------------------------
+# legacy nested folder prior to flattening
+CG-Terminal/
+
 # deepscan telemetry: 445 files of per-round machine telemetry — local only
 # (remote audit policy: keep the repo lean; data stays on the machine)
 desk/deepscan/
