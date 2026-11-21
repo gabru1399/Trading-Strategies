@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { cgHeaders, decryptCgResponse } from "./crypto";
 
 /**
@@ -49,7 +50,18 @@ const MAX_CG_CONCURRENCY = 6;
 /** running total of cached raw bytes — the OOM guard reads this (debug/mem route) */
 const cacheBytes = (gC.__cgClientCacheBytes ??= { n: 0 });
 
+/** BACKGROUND PRIORITY (merged from the Trading-Strategies hardening branch,
+ *  2026-11-21): engine/boot pollers run inside `withCgBackground` so their
+ *  fetches are marked background; when the gate is saturated, user-triggered
+ *  (foreground) requests skip ahead of the queue. Interactive latency stays
+ *  low while the continuity engine saturates its slots. */
+const backgroundContext = new AsyncLocalStorage<boolean>();
+export function withCgBackground<T>(run: () => T): T {
+  return backgroundContext.run(true, run);
+}
+
 async function withCgSlot<T>(fn: () => Promise<T>): Promise<T> {
+  const isBackground = backgroundContext.getStore() === true;
   if (hostSem.active >= MAX_CG_CONCURRENCY) {
     await new Promise<void>((resolve, reject) => {
       const resume = () => {
@@ -61,7 +73,10 @@ async function withCgSlot<T>(fn: () => Promise<T>): Promise<T> {
         if (index !== -1) hostSem.queue.splice(index, 1);
         reject(new Error("Coinglass request queue timed out"));
       }, 20_000);
-      hostSem.queue.push(resume);
+      // foreground callers go to the FRONT of the queue (a saturated gate
+      // must not hold an interactive request behind a wall of pollers)
+      if (isBackground) hostSem.queue.push(resume);
+      else hostSem.queue.unshift(resume);
     });
     // The slot was HANDED to us by the releaser — `active` already counts
     // this continuation. Do NOT increment again.
