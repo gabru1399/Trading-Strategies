@@ -47,7 +47,10 @@ interface LiqResponse {
   stats: LiqStats | null;
   updatedAt: number;
   stale?: boolean;
+  /** true only when a venue that carries this symbol is not responding (regression or real failure) */
   partial?: boolean;
+  /** venues that failed with a real error (empty = full coverage of listed venues) */
+  failedVenues?: string[];
   /** venue → wider range served because the requested (sym, range) combo 40001'd upstream */
   rangeFallback?: Record<string, string>;
 }
@@ -68,8 +71,9 @@ export default function LiquidationLevelsTool({ sym = "BTC" }: { sym?: string })
   // defense-in-depth: never render stats that belong to another symbol
   const stats = liqQ.data?.sym === sym ? liqQ.data.stats ?? null : null;
   const err = liqQ.error;
+  const failedVenues = liqQ.data?.failedVenues ?? [];
   const status = err ? (stats ? "stale" : "unavailable") : liqQ.loading ? "loading" : liqQ.data?.stale ? "stale"
-    : liqQ.data?.partial ? "partial coverage" : stats ? "live" : "no data";
+    : failedVenues.length ? "degraded coverage" : stats ? "live" : "no data";
   const statusTone = status === "live" ? "text-emerald-400" : err ? "text-red-400"
     : status === "loading" || status === "no data" ? "text-neutral-400" : "text-amber-400";
   const decs = symDecs(sym, stats?.last ?? liqQ.data?.livePrice ?? null);
@@ -179,19 +183,22 @@ export default function LiquidationLevelsTool({ sym = "BTC" }: { sym?: string })
           )}
         </div>
       )}
-      {stats && (err || liqQ.data?.stale || liqQ.data?.partial) && (
+      {stats && (err || liqQ.data?.stale || failedVenues.length > 0) && (
         <div className="rounded border border-amber-900/60 bg-amber-950/40 px-3 py-2 text-xs text-amber-300">
           {err ? "Showing the previous snapshot while the feed retries. " : ""}
           {liqQ.data?.stale
             ? `Showing the snapshot retrieved at ${new Date(liqQ.data.updatedAt).toLocaleTimeString()}. `
             : ""}
-          {liqQ.data?.partial ? "Some configured venues did not return usable data." : ""}
-          {liqQ.data?.rangeFallback && Object.keys(liqQ.data.rangeFallback).length > 0 && (
-            <>
-              {" "}
-              {Object.entries(liqQ.data.rangeFallback).map(([venue, r]) => `${venue} served ${r.toUpperCase()} data (requested range unavailable upstream)`).join(" · ")}.
-            </>
-          )}
+          {failedVenues.length > 0
+            ? `${failedVenues.join(", ")} ${failedVenues.length === 1 ? "is" : "are"} not responding — the aggregate covers the remaining venues.`
+            : ""}
+        </div>
+      )}
+      {stats && !err && liqQ.data?.rangeFallback && Object.keys(liqQ.data.rangeFallback).length > 0 && (
+        <div className="rounded border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-xs text-neutral-400">
+          {Object.entries(liqQ.data.rangeFallback)
+            .map(([venue, r]) => `${venue} levels shown from the ${r.toUpperCase()} window (${range.toUpperCase()} unavailable upstream for this venue)`)
+            .join(" · ")}.
         </div>
       )}
 

@@ -22,7 +22,14 @@ interface Snapshot {
   model: LiqModel;
   perVenue: Record<string, number>;
   venues: string[];
+  /** true ONLY when a venue that carries this symbol's data is not responding
+   *  (regression vs. what has served before, or a real fetch failure). A
+   *  configured venue that never lists the symbol is an expected absence —
+   *  it is NOT partial coverage (live: Bitget/Hyperliquid miss on many alts,
+   *  candidate sets are intentionally superset). */
   partial: boolean;
+  /** venues that failed with a real error (named in the UI) */
+  failedVenues?: string[];
   /** venue → range actually served (differs from the requested range when the combo 40001'd upstream) */
   rangeFallback?: Record<string, string>;
   fromDisk?: boolean;
@@ -31,6 +38,14 @@ interface Snapshot {
 const snapshots = new BoundedMap<Snapshot>(32);
 const failures = new BoundedMap<{ at: number; error: string }>(32);
 const pending = new Map<string, Promise<Snapshot>>();
+/** sym → venue names that have EVER served usable data for it (bounded).
+ *  Learns from live responses: once a venue has served a symbol, its later
+ *  absence is a coverage regression worth flagging; a venue that has never
+ *  served it and returns no-data simply does not list the pair. */
+const servedEver = new BoundedMap<Set<string>>(64);
+/** rejection from a venue that does not carry the symbol at all (the range
+ *  ladder exhausted every range with no-data) — expected absence, not failure */
+const NO_DATA_RE = /^no usable liquidation snapshot/;
 
 async function loadSnapshotFromDisk(sym: string, range: string, limit: number): Promise<Snapshot | null> {
   try {
@@ -85,12 +100,15 @@ async function loadSnapshotFromDisk(sym: string, range: string, limit: number): 
     }
     const model = buildLiqModel(available);
     if (!model) return null;
+    // on-disk snapshots replay the venues that were live at capture — an
+    // honest full-coverage archive is NOT partial coverage (the old blanket
+    // `partial: true` here made every disk-serve render the red-flag warning)
     return {
       at,
       model,
       perVenue,
       venues: Array.from(venuesMap.keys()),
-      partial: true,
+      partial: false,
       fromDisk: true,
     };
   } catch (err) {
@@ -130,9 +148,27 @@ async function loadSnapshot(sym: string, range: string, limit: number): Promise<
     perVenue[venue.name] = venue.payload.data.length;
     if (venue.rangeUsed !== range) rangeFallback[venue.name] = venue.rangeUsed;
   }
+  // ---- evidence-based coverage semantics (2026-11-21 fix) ----
+  // A configured venue that is missing from `available` is only a REGRESSION
+  // (partial coverage) when it has served this symbol before or it failed
+  // with a real error (429/network). A venue that exhausted the range ladder
+  // with no-data has simply never listed the pair — expected absence, the
+  // candidate sets are intentionally superset (live: Bitget/Hyperliquid miss
+  // on many alts; metals run Binance/OKX/Bybit/Bitget/Gate).
+  const known = servedEver.get(sym) ?? new Set<string>();
+  for (const venue of available) known.add(venue.name);
+  servedEver.set(sym, known);
+  const failedVenues: string[] = [];
+  requested.forEach((venue, i) => {
+    if (available.some((a) => a.name === venue.name)) return;
+    const r = results[i];
+    const realFailure = r.status === "rejected" && !NO_DATA_RE.test(String(r.reason ?? ""));
+    if (realFailure || known.has(venue.name)) failedVenues.push(venue.name);
+  });
   return {
     at: Date.now(), model, perVenue, venues: available.map((v) => v.name),
-    partial: available.length < requested.length,
+    partial: failedVenues.length > 0,
+    ...(failedVenues.length ? { failedVenues } : {}),
     ...(Object.keys(rangeFallback).length ? { rangeFallback } : {}),
   };
 }
@@ -222,6 +258,7 @@ export async function GET(req: NextRequest) {
     ok: true, supported: true, sym, range, lvR,
     venues: snapshot.venues, perVenue: snapshot.perVenue, stats, livePrice,
     ...(snapshot.rangeFallback ? { rangeFallback: snapshot.rangeFallback } : {}),
+    ...(snapshot.failedVenues ? { failedVenues: snapshot.failedVenues } : {}),
     stale: stale || snapshot.fromDisk === true || Date.now() - snapshot.at >= STALE_MS,
     partial: snapshot.partial, updatedAt: snapshot.at,
   });

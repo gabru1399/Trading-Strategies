@@ -217,7 +217,10 @@ async function toolLiquidationLevels(args) {
   const lines = [
     `${sym} liquidation clusters (${range}, ±4%, ${d.venues.join("+")}) — reference price ${s.last}`,
     ...(d.stale ? [`STALE snapshot from ${new Date(d.updatedAt).toISOString()}`] : []),
-    ...(d.partial ? ["Partial venue coverage"] : []),
+    ...(d.failedVenues?.length ? [`degraded coverage — ${d.failedVenues.join(", ")} not responding`] : []),
+    ...(Object.keys(d.rangeFallback ?? {}).length
+      ? [`${Object.entries(d.rangeFallback).map(([v, r]) => `${v}: ${r.toUpperCase()} window (requested range unavailable upstream)`).join(" · ")}`]
+      : []),
     `est. open liq: shorts(above) ${fmtP(s.totals.shorts, 0)} · longs(below) ${fmtP(s.totals.longs, 0)}`,
     `strongest above: ${s.keyLevels.above.map((l) => `${fmtP(l.price)} (+${fmtP(l.distPct)}%, str ${fmtP(l.strength, 0)}, ${l.lev} lev)`).join(" | ")}`,
     `strongest below: ${s.keyLevels.below.map((l) => `${fmtP(l.price)} (−${fmtP(l.distPct)}%, str ${fmtP(l.strength, 0)}, ${l.lev} lev)`).join(" | ")}`,
