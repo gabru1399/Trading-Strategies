@@ -174,19 +174,19 @@ def analyze_asset_itcls(sym):
     # Delta Exchange India: Max Risk $0.50 USD, Margin cap $1.50 USD
     delta_risk_cap = 0.50
     delta_margin_cap = 1.50
-    # Determine unit per contract (e.g. BTC=0.001, ETH=0.01, SOL=0.1, etc.)
+    # Determine unit per contract directly from Delta Exchange product specifications
     contract_units = {
         "BTC": 0.001,
         "ETH": 0.01,
-        "SOL": 0.1,
-        "BNB": 0.01,
+        "SOL": 1.0,
+        "BNB": 0.1,
         "PAXG": 0.001,
         "XAU": 0.001,
         "XRP": 1.0,
-        "DOGE": 10.0,
+        "DOGE": 100.0,
         "ADA": 1.0,
-        "LINK": 0.1,
-        "LTC": 0.01,
+        "LINK": 1.0,
+        "LTC": 0.1,
         "AVAX": 0.1,
         "SUI": 1.0,
         "NEAR": 0.1,
@@ -205,8 +205,8 @@ def analyze_asset_itcls(sym):
     # Check stressed loss
     actual_delta_loss = delta_contracts * loss_per_contract
 
-    # Blueberry MT5: Max Risk $6.00 USD, PIT-18 Spread Check
-    mt5_risk_cap = 6.00
+    # Blueberry MT5: Max Risk $10.00 USD (Operator Authorized), PIT-18 Spread Check
+    mt5_risk_cap = 10.00
     # Typical MT5 spreads (points)
     mt5_spreads = {
         "BTC": 15.0,
