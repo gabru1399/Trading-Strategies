@@ -19707,3 +19707,24 @@ analysis script rc=139
 - None — data missing, HOLD (manual check)
 - None — data missing, HOLD (manual check)
 
+
+## R821 · 2026-11-21 16:21 UTC · zai-desk (operator-directed ITCLS pullback screen)
+
+**Market**: BTC 59,882 (-?)  ETH 1,672.9 (?)  SOL 70.16 (+4.5%)  XAU 3,561.6 (+0.6%)  XAG 41.9 (+0.3%)
+**Bias (|score|≥2)**: broad risk-on relief bounce — XAU +1.34σ above VWAP, SOL +1.46σ, XRP +1.54σ
+
+### Opportunities (ITCLS universe screen — scripts/desk_screen_itcls.py, 58 curated perps)
+- 6 screen candidates (all SHORT, bearish HTF): XAU pre 3.5 · SOL 3.5 · LINK 3.5 · ATOM 3.5 · HBAR 3.5 · XRP 3.5
+- GATE-09 sector isolation: BTC + SEI shorts already running → all 5 crypto candidates BARRED (max 1 crypto position/direction)
+- XAU (TradFi) survives → full D1–D16 deep-dive (data/desk-deepdive-itcls.json)
+
+### XAU verdict — S10-ITCLS SHORT at the 3603 short-liq shelf
+- Table 7: 6.5/11.5 = Grade B (trend 2.0 · regime 0.0 · signal 1.0 · wall 1.5 · cvd 1.0 · liq-gate 0.0 · gex n/a · spread 1.0)
+- Entry 3603.11 · stop 3615.72 · T1 3540.69 (4.95R) · T2 3501.00 (8.10R, long-liq floor str 100 + $5.09M bid wall)
+- CVD perp drift −301/48h confirms sellers on the rally; ask ceiling 3645 $1.95M
+- **GATE-07 sizing veto**: min lot 0.01 = $12.61 base / $15.13 stressed > $10 MT5 cap → NO ORDER placed
+- Card: desk/deepscan/FORMULATION-XAU-20261121-1621.md (ready-to-arm template if cap lifted or shelf rebuilds nearer)
+
+### Housekeeping
+- Stale MT5 resting order MT5-XAU-20297864 (SELL_LIMIT 3741.5, +5% above market) flagged for §12 cancel/replace at next atg-exec wake
+- 5 symbols still no-data on liqlevels (ADA DOGE TRX ANTHROPIC VET) — coverage gap logged, not silently dropped

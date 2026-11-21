@@ -2111,3 +2111,14 @@
 
 ## 2026-11-21 16:00 UTC — ALERT A10 — outbox-reply
 - BELL: atg replied to directive (2026-11-10T16-10-00_DIR-0003-broker-symbols-and-status.reply.md, 2026-11-10T17-36-00_DIR-0004-funding-oi-endpoints.reply.md, 2026-11-10T17-59-00_DIR-0005-expiry-cancel-BTC-209404683.reply.md, 2026-11-10T18-12-00_DIR-0006-local-alerts.reply.md, 2026-11-10T19-25-00_DIR-0007-expiry-cancel-ETH-XAG.reply.md, 2026-11-10T20-30-00_DIR-0008-terminal-rebuild-and-feed-verify.reply.md, 2026-11-10T21-25-00_DIR-0009-full-universe-feed-verify-and-symbols-dump.reply.md, 2026-11-11T03-02-00_DIR-0010-expiry-cancel-ETH-XAG-rearm.reply.md, 2026-11-11T07-55-00_DIR-0011-rebuild-full-universe-ui.reply.md, 2026-11-11T09-50-00_DIR-0013-rebuild-r4-microstructure-layer.reply.md, 2026-11-11T15-35-00_DIR-0014-binance-top200-tier-rebuild.reply.md, VERIFY-R18-ETH-1.reply.md, VERIFY-R4-BTC-1.reply.md, VERIFY-TP-209404683.reply.md) — zai-desk to verify on next wake
+
+## 2026-11-21 16:21 UTC — zai-desk R821 ITCLS pullback screen (operator-directed)
+- XAU S10-ITCLS SHORT card ready: desk/deepscan/FORMULATION-XAU-20261121-1621.md
+  Entry 3603.11 / stop 3615.72 / T1 3540.69 / T2 3501.00 (8.10R) · Table 7 = 6.5 Grade B
+  GATE-07 BLOCKED at min lot ($15.13 stressed > $10 cap) — DO NOT place as-is.
+  Arm ONLY if (a) operator lifts max_risk_mt5_usd ≥ 16, or (b) shelf rebuilds 3596–3600
+  with stop ≤ 8.3pt. Then convert card to suggested order per desk/PROTOCOL.md.
+- ACTION for atg-exec (canonical §12): review stale MT5-XAU-20297864 SELL_LIMIT 3741.5
+  (+5% above market, placed 2026-11-19 regime) → recommend CANCEL/REPLACE; do not layer.
+- Crypto ITCLS candidates (SOL LINK ATOM HBAR XRP) all GATE-09 barred (BTC+SEI shorts
+  occupy the crypto direction). No action until a crypto slot frees.
