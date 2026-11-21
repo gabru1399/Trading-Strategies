@@ -112,3 +112,28 @@ Delta_Fibonacci_Institutional_Business/
 *.csv
 
 scratch/
+
+# ---------------------------------------------------------------------------
+# Union additions (2026-11-21 consolidation): Trading-Strategies is the single
+# source of truth; repo root = CG Order-Flow Terminal, engines are siblings.
+# ---------------------------------------------------------------------------
+# deepscan telemetry: 445 files of per-round machine telemetry — local only
+# (remote audit policy: keep the repo lean; data stays on the machine)
+desk/deepscan/
+
+# engine-local data (HFT / Delta-Fibonacci — never push backtests/artifacts)
+HFT/data/
+HFT/logs/
+Delta-Fibonacci-Institutional-Business/Blueberry_Data/
+FundedNext_Data/
+
+# python envs & caches anywhere in the tree
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# audit daemon pid/state
+audit/*.log
+audit/*.pid
+

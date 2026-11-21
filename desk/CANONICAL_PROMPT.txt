@@ -1,7 +1,7 @@
 ANTIGRAVITY TRADING ROUND
 Round: <scheduler-issued R<number>>
 Mode: AUDIT
-Workspace: C:/Users/SIGMA/Documents/Trading-Strategies/CG-Terminal
+Workspace: C:/Users/SIGMA/Documents/Trading-Strategies
 
 Run a full canonical round according to desk/CANONICAL_MASTER_SPECIFICATION.md.
 Use the snapshot cutoff and deadline assigned by the scheduler or operator. If
@@ -59,6 +59,10 @@ If the required feed or service is offline, report the pre-flight blocker.
    python scripts/agent_wake_verification.py --round <round-id> --require-formulation-reads
    If the command fails, keep formulation blocked. For every promoted
    candidate or managed symbol, complete its evidence rows before deciding.
+   Before writing any entry intent, read Section 25 (Trade-Formulation
+   Thinking Chain) and walk its seven steps for the candidate; emit the
+   chain into the dossier under the candidate's heading, then the
+   canonical score-line from Section 24.2.
    Cite the applicable SOP rule IDs with each decision. Save DECIDE, all eight Table 7 factors, Oracle,
    eight evidence-based council positions, the ten model checks, and all
    applicable gate results. Assign a disposition to every resting order and

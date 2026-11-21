@@ -1,11 +1,14 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { cgGet } from "@/lib/cg/client";
-import { buildLiqModel, liqStats, type LiqModel, type RawLiqPayload } from "@/lib/cg/liq-model";
-import { liqVenues, symDecs } from "@/lib/cg/assets";
+import { buildLiqModel, fetchLiqVenuePayload, liqStats, type LiqModel, type RawLiqLevel, type RawLiqPayload } from "@/lib/cg/liq-model";
+import { leadInstr, liqVenues, symDecs } from "@/lib/cg/assets";
 import { anyTerminalSym, knownSym } from "@/lib/cg/sym-gate";
 import { getLivePrice } from "@/lib/live/server-price";
 import { fetchBinCandles } from "@/lib/cg/fallbacks";
 import { BoundedMap } from "@/lib/cg/bounded";
+import { resolveDataRoot, rowsOf } from "@/lib/cg/store";
 import type { LiquidationLevel } from "@/lib/cg/types";
 
 export const dynamic = "force-dynamic";
@@ -20,86 +23,59 @@ interface Snapshot {
   perVenue: Record<string, number>;
   venues: string[];
   partial: boolean;
+  /** venue → range actually served (differs from the requested range when the combo 40001'd upstream) */
+  rangeFallback?: Record<string, string>;
+  fromDisk?: boolean;
 }
 
 const snapshots = new BoundedMap<Snapshot>(32);
 const failures = new BoundedMap<{ at: number; error: string }>(32);
 const pending = new Map<string, Promise<Snapshot>>();
 
-function unwrapPayload(value: unknown): RawLiqPayload | null {
-  for (let depth = 0; depth < 3; depth++) {
-    if (!value || typeof value !== "object") return null;
-    const payload = value as { prices?: unknown; data?: unknown };
-    if (Array.isArray(payload.prices) && Array.isArray(payload.data)) {
-      const valid = payload.prices.length >= 10 && payload.prices.every((row) =>
-        Array.isArray(row) && [0, 2, 3, 4].every((i) => Number.isFinite(Number(row[i])) && Number(row[i]) > 0)
-        && Number(row[2]) >= Number(row[3])
-      );
-      return valid ? (payload as RawLiqPayload) : null;
-    }
-    value = payload.data;
-  }
-  return null;
-}
-
 async function loadSnapshotFromDisk(sym: string, range: string, limit: number): Promise<Snapshot | null> {
   try {
-    const fs = await import("fs/promises");
-    const path = await import("path");
-    const candidates = [
-      path.join(process.cwd(), "data", "cg-series", `liqlevels_${sym}_${range}.jsonl`),
-      path.join(process.cwd(), "data", "cg-series", `liqlevels_${sym}_3d.jsonl`),
-      ...(sym === "BTC" ? [
-        path.join(process.cwd(), "data", "cg-series", `liqlevels_${range}.jsonl`),
-        path.join(process.cwd(), "data", "cg-series", "liqlevels_3d.jsonl"),
-      ] : []),
-    ];
-    let filePath: string | null = null;
-    for (const c of candidates) {
-      try {
-        await fs.access(c);
-        filePath = c;
-        break;
-      } catch {}
+    const root = resolveDataRoot();
+    const fileNames = sym === "BTC" ? [`liqlevels_${range}.jsonl`, `liqlevels_BTC_${range}.jsonl`] : [`liqlevels_${sym}_${range}.jsonl`];
+    if (range !== "3d") {
+      fileNames.push(...(sym === "BTC" ? ["liqlevels_3d.jsonl", "liqlevels_BTC_3d.jsonl"] : [`liqlevels_${sym}_3d.jsonl`]));
     }
-    if (!filePath) return null;
-
-    const raw = await fs.readFile(filePath, "utf8");
-    const lines = raw.trim().split("\n");
-    if (!lines.length) return null;
-    const rows = lines.slice(-limit).map((l) => {
-      try { return JSON.parse(l); } catch { return null; }
-    }).filter((r) => r && typeof r === "object");
-    if (!rows.length) return null;
-
-    let candles = await fetchBinCandles(sym, "15m", 100).catch(() => []);
-    if (!candles.length) {
-      const now = Date.now();
-      const avgP = rows.reduce((acc, r) => acc + (Number(r.p) || 0), 0) / rows.length || 1;
-      candles = Array.from({ length: 96 }, (_, i) => ({
-        t: now - (96 - i) * 900_000,
-        o: avgP, h: avgP * 1.005, l: avgP * 0.995, c: avgP, v: 1000,
-      }));
+    type ArchivedLevel = { at: number; v: string; p: number; s: number; l2: string; side: number };
+    const rows: ArchivedLevel[] = [];
+    for (const name of fileNames) {
+      const raw = await readFile(/* turbopackIgnore: true */ join(root, name), "utf8").catch(() => "");
+      for (const line of raw.trim().split("\n")) {
+        if (!line) continue;
+        try {
+          const row = JSON.parse(line) as ArchivedLevel;
+          if (row && row.at > 0 && row.p > 0 && row.s > 0 && typeof row.v === "string") rows.push(row);
+        } catch { /* skip a partial or malformed archive line */ }
+      }
     }
-    const prices: [number, number, number, number, number, number][] = candles.map((b) => [
-      Math.floor(b.t / 1000), b.o, b.h, b.l, b.c, b.v,
-    ]);
+    const at = rows.reduce((latest, row) => Math.max(latest, row.at), 0);
+    if (!at) return null;
 
     const venuesMap = new Map<string, RawLiqLevel[]>();
-    let maxAt = 0;
     for (const r of rows) {
-      if (r.at && r.at > maxAt) maxAt = r.at;
-      const vKey = String(r.v || "");
-      const vName = vKey.split("_")[0] || vKey || "Aggregated";
+      if (r.at !== at) continue;
+      const vName = r.v.split("_")[0] || "Aggregated";
       if (!venuesMap.has(vName)) venuesMap.set(vName, []);
-      venuesMap.get(vName)!.push({
+      const levels = venuesMap.get(vName)!;
+      if (levels.length >= limit) continue;
+      levels.push({
         price: Number(r.p),
         size: Number(r.s),
         level2: r.l2,
         side: r.side,
-        beginDate: Math.floor((r.at || Date.now()) / 1000),
+        beginDate: Math.floor(r.at / 1000),
       });
     }
+
+    const archived = rowsOf(`kline:${leadInstr(sym)}:m15`, (b: { t: number }) => String(b.t)) as Awaited<ReturnType<typeof fetchBinCandles>>;
+    let candles = archived.filter((b) => b.t <= at && b.t >= at - 25 * 3_600_000).sort((a, b) => a.t - b.t).slice(-100);
+    if (candles.length < 10) candles = await fetchBinCandles(sym, "15m", 100, undefined, undefined, at).catch(() => []);
+    if (candles.length < 10 && archived.length >= 10) candles = archived.slice(-100);
+    if (candles.length < 10) return null;
+    const prices: RawLiqPayload["prices"] = candles.map((b) => [Math.floor(b.t / 1000), b.o, b.h, b.l, b.c, b.v]);
 
     const available: { name: string; payload: RawLiqPayload }[] = [];
     const perVenue: Record<string, number> = {};
@@ -110,11 +86,12 @@ async function loadSnapshotFromDisk(sym: string, range: string, limit: number): 
     const model = buildLiqModel(available);
     if (!model) return null;
     return {
-      at: maxAt || Date.now(),
+      at,
       model,
       perVenue,
       venues: Array.from(venuesMap.keys()),
       partial: true,
+      fromDisk: true,
     };
   } catch (err) {
     console.error("[liqlevels] loadSnapshotFromDisk error for", sym, err);
@@ -126,20 +103,20 @@ async function loadSnapshot(sym: string, range: string, limit: number): Promise<
   const requested = liqVenues(sym);
   const results = await Promise.allSettled(requested.map(async (venue, i) => {
     if (i > 0) await new Promise((r) => setTimeout(r, i * 50));
-    const query = new URLSearchParams({ symbol: venue.key, limit: String(limit), range });
-    // Aggregate freshness with client-level caching: 30s TTL keeps the
-    // endpoint polite and allows staleDuringCooldown to serve recent payloads
-    // during transient upstream 429 rate-limit windows.
-    const data = await cgGet("/api/liquidationLevels/v2?" + query, 30_000);
-    const payload = unwrapPayload(data);
-    if (!payload) throw new Error("Unusable liquidation snapshot");
-    return { name: venue.name, payload };
+    // Per-venue range ladder: an upstream 40001 on an individual
+    // (symbol, range) combo (live-verified: Hyperliquid BTC 3d on
+    // 2026-11-21, while HL BTC 7d/ETH 3d/SOL 3d served fine) must not
+    // drop the venue from the aggregate. fetchLiqVenuePayload retries the
+    // wider ranges before giving up; real failures (429/network) rethrow
+    // and keep their original semantics.
+    const { payload, rangeUsed } = await fetchLiqVenuePayload(cgGet, venue.key, range, limit);
+    return { name: venue.name, payload, rangeUsed };
   }));
   const available = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
   let model = buildLiqModel(available);
   if (!model) {
     // Upstream throttled or returned no data — fall back to local on-disk series
-    const diskSnapshot = await loadSnapshotFromDisk(sym, range, limit);
+    const diskSnapshot = (await loadSnapshotFromDisk(sym, range, limit)) ?? (range !== "3d" ? await loadSnapshotFromDisk(sym, "3d", limit) : null);
     if (diskSnapshot) return diskSnapshot;
 
     const throttled = results.some((r) => r.status === "rejected" && String(r.reason).includes("429"));
@@ -148,10 +125,15 @@ async function loadSnapshot(sym: string, range: string, limit: number): Promise<
       : "Coinglass did not return a usable liquidation snapshot. Try again shortly.");
   }
   const perVenue = Object.fromEntries(requested.map((v) => [v.name, 0]));
-  for (const venue of available) perVenue[venue.name] = venue.payload.data.length;
+  const rangeFallback: Record<string, string> = {};
+  for (const venue of available) {
+    perVenue[venue.name] = venue.payload.data.length;
+    if (venue.rangeUsed !== range) rangeFallback[venue.name] = venue.rangeUsed;
+  }
   return {
     at: Date.now(), model, perVenue, venues: available.map((v) => v.name),
     partial: available.length < requested.length,
+    ...(Object.keys(rangeFallback).length ? { rangeFallback } : {}),
   };
 }
 
@@ -218,10 +200,16 @@ export async function GET(req: NextRequest) {
     // If we have an existing snapshot (even if older than STALE_MS), serve it as stale
     // rather than throwing a hard 503 error. Only throw 503 if no snapshot exists at all.
     if (!snapshot) {
-      return NextResponse.json(
-        { ok: false, sym, range, lvR, error: error instanceof Error ? error.message : "Liquidation data unavailable" },
-        { status: 503, headers: { "Retry-After": String(RETRY_MS / 1000) } },
-      );
+      snapshot = (await loadSnapshotFromDisk(sym, range, limit).catch(() => null)) ?? undefined;
+      if (!snapshot && range !== "3d") {
+        snapshot = (await loadSnapshotFromDisk(sym, "3d", limit).catch(() => null)) ?? undefined;
+      }
+      if (!snapshot) {
+        return NextResponse.json(
+          { ok: false, sym, range, lvR, error: error instanceof Error ? error.message : "Liquidation data unavailable" },
+          { status: 503, headers: { "Retry-After": String(RETRY_MS / 1000) } },
+        );
+      }
     }
     stale = true;
   }
@@ -233,7 +221,9 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true, supported: true, sym, range, lvR,
     venues: snapshot.venues, perVenue: snapshot.perVenue, stats, livePrice,
-    stale, partial: snapshot.partial, updatedAt: snapshot.at,
+    ...(snapshot.rangeFallback ? { rangeFallback: snapshot.rangeFallback } : {}),
+    stale: stale || snapshot.fromDisk === true || Date.now() - snapshot.at >= STALE_MS,
+    partial: snapshot.partial, updatedAt: snapshot.at,
   });
 }
 

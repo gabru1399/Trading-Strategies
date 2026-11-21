@@ -1,5 +1,13 @@
 # CG Order-Flow Terminal
 
+> **Single source of truth (2026-11-21):** this repository —
+> `github.com/singhkaranbir842-sys/Trading-Strategies`, branch `main` — is the
+> ONLY canonical copy of the terminal and both engines. The terminal lives at
+> the repository root (the earlier `CG-Terminal/` nesting is gone);
+> `HFT/` and `Delta-Fibonacci-Institutional-Business/` are siblings. Local
+> clones: `git pull --rebase origin main` before any edit. The desk daemon
+> (`scripts/desk_daemon.mjs`) auto-syncs `desk/` state through this branch.
+
 An institution-style, **100% live-API** order-flow terminal for the curated
 **61-asset universe** (30 crypto perps · 28 TradFi perps · 3 classic indices;
 canonical list in `src/lib/universe/curated.ts`) with a local continuity engine, live notification feed, and a

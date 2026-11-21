@@ -1485,6 +1485,66 @@ wake → notifications (HIGH triage) → alpha_screener (grades)
 
 ---
 
+## SECTION 25. THE TRADE-FORMULATION THINKING CHAIN (MANDATORY REASONED PATH FROM EVIDENCE TO ORDER)
+<a id="sec-25"></a>
+
+> **Section card** — **Purpose:** Force the trade-formulation step to run as an explicit, inspectable chain of reasoning — perception → structure → hypothesis → invalidation → sizing → intent — instead of a leap from a screen of numbers to an order. · **Round step:** Step 5 (formulation), feeding Step 6 (decision) · **Must output:** the seven-stage chain in the candidate dossier (plain text, ≤ 25 lines), each stage citing the dimensions it consumed.
+
+[TC-00] [MANDATORY] [WHY_A_CHAIN]: A score-line (§24.2) states a decision; it does not show how the desk derived it. The thinking chain is the audit trail between the D01–D16 sheet and the intent: any reviewer (or the Human) must be able to reconstruct the trade from evidence without asking the desk. A candidate that cannot write its chain honestly has not been formulated — it has been rationalized.
+
+### 25.1 The seven stages (each one is a required dossier line)
+
+[TC-01] [MANDATORY] [CHAIN_STAGES]: Every candidate records the chain in this exact order. Each stage is 1–4 lines, names the dimensions/tools it consumed, and ends with its one-line conclusion. Skipping or reordering a stage is a Step 5 defect.
+
+| # | Stage | The question it answers | Consumes |
+| :--- | :--- | :--- | :--- |
+| 1 | **PERCEIVE** | What is the market actually doing RIGHT NOW (trend regime, volatility state, one-line structure read)? | D01–D04, market_snapshot (EMA 13/89/233 stack + RSI per timeframe, VWAP σ-band position, auction VAL/POC/VAH) |
+| 2 | **LOCATE** | Where is the resting leverage — the magnets price gets pulled toward and the levels that break the idea? | D11 (liqlevels 3d/7d/30d clusters), stopmap/liq heatmap (BTC), book_walls + whale_orders (walls), D16 (liq-live coverage) |
+| 3 | **HYPOTHESIZE** | The single causal story: WHO is trapped, WHERE, and WHAT forces their hand? (one sentence, falsifiable) | synthesis of 1+2 — e.g. "shorts stacked above the 3598 magnet; a VWAP reclaim forces their cover into thin liquidity" |
+| 4 | **INVALIDATE** | What observable, at what level, kills the hypothesis BEFORE the stop is hit? | the contrary evidence list from §24.2 + K-4 vetoes: the exact price/statistic and the reaction expected there |
+| 5 | **STRUCTURE** | Entry zone, cold-zone stop, T1/T2/T3 — each placed AT a level from stages 2–3, never mid-air | DECIDE (§8), archetype EA-1…EA-7, Table 7 score-line fields |
+| 6 | **SIZE** | What does 1.0% risk + portfolio heat + correlation guard allow here? | CHK-C inputs: portfolio_risk, N_eff, net beta, concurrent-fill worst case |
+| 7 | **COMMIT or STAND DOWN** | Does expected value survive the chain? (A-/A+ only; B grades stand down or go to the watch ledger) | final disposition + canonical score-line |
+
+### 25.2 Rules of honest chaining
+
+[TC-02] [MANDATORY] [NO_ORACLE_LEAPS]: Stage 3 must cite stages 1–2 explicitly ("because D11 shows X and EMA stack shows Y…"). A hypothesis that quotes a tool without linking it to structure is unchained — reject at Step 6. The Oracle (§15) may support or challenge the chain; it never replaces stages 1–2.
+
+[TC-03] [MANDATORY] [MAGNETS_BEFORE_STOPS]: A stop may only be placed in a COLD ZONE — a region with no named magnet between entry and stop from stage 2. If every cold zone is farther than the archetype's max stop distance, the setup is a NO-TRADE (recorded, not forced).
+
+[TC-04] [MANDATORY] [PULLBACK_DISCIPLINE]: For pullback entries (the EA family that waits for price to return to a level): entry is AT or INSIDE the magnet cluster identified in stage 2, never in front of it; the first touch of a 30d-window magnet requires either absorption evidence (footprint signal at the level) or a retest — a blind limit at a magnet is a NO-TRADE.
+
+[TC-05] [REFERENCE] [CHAIN_BREVITY]: The chain is a reasoning record, not prose: ≤ 25 lines total in the dossier. If a stage needs more than 4 lines, the setup is too complicated to trade under §16's risk budget.
+
+### 25.3 Worked example (XAU, 2026-11-21, AUDIT-mode illustration)
+
+```text
+1 PERCEIVE  XAU 3562 (Binance lead). d1 EMA13>89>233 stacked up; h4 RSI 61;
+           price between VWAP+1σ and +2σ; day auction POC 3541 below spot.
+2 LOCATE    liqlevels (estimates): 30d magnets BELOW 3526.8 (-1.0%, $9.1M
+           est) and 3491.3 (-2.0%, $9.0M); ABOVE 3597.4/3633 (+1.0/+2.0%,
+           $1.9M each); book walls thin above 3600 (single venue).
+3 HYPOTHESIZE Longs are NOT trapped; shorts are: the -1% magnet at 3526 is
+           the pullback floor — dip INTO 3526–3534 that holds forces the
+           +1%/+2% short clusters to cover into thin walls (squeeze fuel).
+4 INVALIDATE 4h close below 3491 (the -2% magnet) breaks the floor story —
+           stand down longs, hypothesis dead before any stop discussion.
+5 STRUCTURE Entry 3527–3534 (inside magnet); stop 3485 (cold zone below
+           3491, 1.2%); T1 3597 (+1% magnet), T2 3633 (+2%), T3 trail.
+6 SIZE      1.0% budget, heat 0.0% open, XAU correlates ~0 with crypto
+           book → full unit = 0.83R at stop; two tranches.
+7 COMMIT    Grade A (7.9/11.5, no veto) → submitted as AUDIT dry disposition;
+           score-line emitted (§24.2).
+```
+
+### 25.4 Verification hooks
+
+[TC-06] [MANDATORY] [CHAIN_IN_REPORT]: The final round report embeds each candidate's seven-stage chain verbatim (not a summary). The pre-submit self-check CHK-D (§24.4) treats a missing stage as a blank cell — disposition FAIL.
+
+[TC-07] [REFERENCE] [CHAIN_TO_PROMPT]: The desk wake prompt (`desk/CANONICAL_PROMPT.txt`) points here; agents formulate through §25 before scoring with §24.
+
+---
+
 # APPENDICES (EDITOR-ADDED — REFERENCE & GOVERNANCE LAYER)
 
 > Everything in the Appendices is NEW in structure revision 2.1.0-s1. Appendix A records conflicts **found** in the specification; none was silently "fixed" in the body. The Human resolves each row by ticking the decision column and editing the cited ID.

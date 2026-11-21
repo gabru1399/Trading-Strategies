@@ -48,6 +48,8 @@ interface LiqResponse {
   updatedAt: number;
   stale?: boolean;
   partial?: boolean;
+  /** venue → wider range served because the requested (sym, range) combo 40001'd upstream */
+  rangeFallback?: Record<string, string>;
 }
 
 function fmtM(n: number): string {
@@ -66,7 +68,7 @@ export default function LiquidationLevelsTool({ sym = "BTC" }: { sym?: string })
   // defense-in-depth: never render stats that belong to another symbol
   const stats = liqQ.data?.sym === sym ? liqQ.data.stats ?? null : null;
   const err = liqQ.error;
-  const status = err ? "unavailable" : liqQ.loading ? "loading" : liqQ.data?.stale ? "stale"
+  const status = err ? (stats ? "stale" : "unavailable") : liqQ.loading ? "loading" : liqQ.data?.stale ? "stale"
     : liqQ.data?.partial ? "partial coverage" : stats ? "live" : "no data";
   const statusTone = status === "live" ? "text-emerald-400" : err ? "text-red-400"
     : status === "loading" || status === "no data" ? "text-neutral-400" : "text-amber-400";
@@ -172,29 +174,44 @@ export default function LiquidationLevelsTool({ sym = "BTC" }: { sym?: string })
       {err && !stats && (
         <div role="alert" className="rounded border border-red-900/60 bg-red-950/40 px-3 py-2 text-xs text-red-300">
           {err} Retrying automatically.
+          {range !== "3d" && (
+            <button className="ml-2 underline" onClick={() => setRange("3d")}>View 3-day levels</button>
+          )}
         </div>
       )}
       {stats && (err || liqQ.data?.stale || liqQ.data?.partial) && (
         <div className="rounded border border-amber-900/60 bg-amber-950/40 px-3 py-2 text-xs text-amber-300">
-          {err ? "Upstream rate limited — displaying cached snapshot while retrying. " : ""}
+          {err ? "Showing the previous snapshot while the feed retries. " : ""}
           {liqQ.data?.stale
             ? `Showing the snapshot retrieved at ${new Date(liqQ.data.updatedAt).toLocaleTimeString()}. `
             : ""}
           {liqQ.data?.partial ? "Some configured venues did not return usable data." : ""}
+          {liqQ.data?.rangeFallback && Object.keys(liqQ.data.rangeFallback).length > 0 && (
+            <>
+              {" "}
+              {Object.entries(liqQ.data.rangeFallback).map(([venue, r]) => `${venue} served ${r.toUpperCase()} data (requested range unavailable upstream)`).join(" · ")}.
+            </>
+          )}
         </div>
       )}
 
       {liqQ.data?.sym === sym && liqQ.data.supported === false && !stats ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-neutral-800 bg-[#11151a] px-6 py-12 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-neutral-800 bg-[#11151a] px-6 py-12 text-center">
           <div className="text-sm font-semibold text-neutral-200">{sym} · No Exchange Liquidation Clusters</div>
           <p className="max-w-lg text-xs leading-relaxed text-neutral-400">
             {liqQ.data.reason ?? "This instrument does not publish aggregated Coinglass perpetual liquidation clusters."}
           </p>
           {liqQ.data.livePrice != null && (
-            <div className="mt-2 rounded border border-neutral-800 bg-[#0e1216] px-4 py-2 text-xs text-neutral-300">
+            <div className="rounded border border-neutral-800 bg-[#0e1216] px-4 py-2 text-xs text-neutral-300">
               Reference mark: <span className="font-mono font-semibold text-neutral-100">{fmtP(liqQ.data.livePrice)}</span>
             </div>
           )}
+          <button
+            onClick={() => setTab("stops")}
+            className="mt-2 rounded bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-200 hover:bg-neutral-700 hover:text-white"
+          >
+            View 24h Stops Heatmap instead
+          </button>
         </div>
       ) : !stats ? (
         <div className="flex h-64 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900/60 text-sm text-neutral-500">

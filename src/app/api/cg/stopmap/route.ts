@@ -21,6 +21,25 @@ export const dynamic = "force-dynamic";
  * the local continuity engine archives every window without gaps.
  *
  * Pure API data: every number comes from /api/index/v2/liqHeatMap.
+ *
+ * UPSTREAM CONTRACT (live-mined from the page bundle + probed 2026-11-21 —
+ * see scripts/research/probe_xau_matrix.mjs and xau-pullback-levels.json):
+ * The page exposes THREE models and TWO modes:
+ *   model 1 → fapi /api/index/v2/liqHeatMap            (pair)  | /api/index/aggregate/liqHeatMap            (coin)
+ *   model 2 → fapi /api/index/v5/liqHeatMap            (pair)  | /api/index/v3/aggregate/liqHeatMap          (coin)
+ *   model 3 → fapi /api/index/v6/liqHeatMap + cp:false (pair)  | /api/index/v4/aggregate/liqHeatMap          (coin)
+ * "pair" mode = one venue's open interest (symbol like Binance_BTCUSDT);
+ * "coin" mode = ALL venues aggregated under a plain coin symbol (symbol=XAU).
+ * Timeframes: model 1/2 use interval/limit (24h=5/288, 48h=15/192,
+ * 3d=15/288, 7d=30/336, 30d=h2/372); model 3 uses range (12h…2y).
+ * ANONYMOUS WALL (probed, isolated, 30 s spacing): only BTC + 24h is served
+ * without a logged-in coinglass.com session — ETH/XAU coin-mode, 48h+ windows
+ * and models on other symbols all return 40000. fapi also REJECTS the
+ * `encryption:true`/`cache-ts-v2` header pair on these routes (50001): plain
+ * requests with the `data` token param only.
+ * Non-BTC perps therefore use the honest rolling liq-levels construction
+ * below (multi-venue /api/liquidationLevels/v2 snapshots) — for XAU/XAG that
+ * IS the pullback-magnet ladder (venue set: Binance/OKX/Bybit/Bitget/Gate).
  */
 
 /** module-level cache keyed by sym|endTime — the `data` token changes every

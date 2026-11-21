@@ -8,7 +8,7 @@ import zlib from "zlib";
 
 const CAPI = "https://capi.coinglass.com";
 const STATIC_KEY = Buffer.from("1f68efd73f8d4921acc0dead41dd39bc", "utf8");
-const TOTP_SECRET_B32 = "I65VU7K5ZQL7WB4E";
+const TOTP_SECRET_B32 = process.env.CG_TOTP_SECRET_B32 || ""; // redacted — set env var (was hardcoded in sandbox copy)
 const KEY_A_CONSTS = { "55": "170b070da9654622", "66": "d6537d845a964081", "77": "863f08689c97435b" };
 
 function base32Decode(s) {

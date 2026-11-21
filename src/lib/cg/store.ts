@@ -8,6 +8,7 @@
  */
 import fs from "fs";
 import path from "path";
+import type { OHLCVCandle } from "./fallbacks";
 
 export interface SeriesStat {
   name: string;
@@ -49,8 +50,10 @@ export function resolveDataRoot(): string {
 }
 
 function resolveRoot(): string {
-  if (process.env.CG_DATA_DIR) return process.env.CG_DATA_DIR;
+  if (process.env.CG_DATA_DIR && fs.existsSync(process.env.CG_DATA_DIR)) return process.env.CG_DATA_DIR;
   let dir = process.cwd();
+  if (fs.existsSync(path.join(dir, "data", "cg-series"))) return path.join(dir, "data", "cg-series");
+  if (fs.existsSync(path.join(dir, "CG-Terminal", "data", "cg-series"))) return path.join(dir, "CG-Terminal", "data", "cg-series");
   let fallbackWithPkg: string | null = null;
   for (let i = 0; i < 8; i++) {
     // <project>/.next/standalone -> <project> (standalone ships its own
@@ -59,16 +62,18 @@ function resolveRoot(): string {
       dir = path.dirname(path.dirname(dir));
       break;
     }
+    if (fs.existsSync(path.join(dir, "data", "cg-series"))) return path.join(dir, "data", "cg-series");
+    if (fs.existsSync(path.join(dir, "CG-Terminal", "data", "cg-series"))) return path.join(dir, "CG-Terminal", "data", "cg-series");
     // the real project root: package.json + data/ both live here
-    if (fs.existsSync(path.join(dir, "package.json"))) {
-      if (fs.existsSync(path.join(dir, "data"))) break;
+    if (fs.existsSync(path.join(/* turbopackIgnore: true */ dir, "package.json"))) {
+      if (fs.existsSync(path.join(/* turbopackIgnore: true */ dir, "data"))) break;
       fallbackWithPkg ??= dir; // package.json without data/ — remember, keep walking
     }
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
-  if (fallbackWithPkg && !fs.existsSync(path.join(dir, "data"))) dir = fallbackWithPkg;
+  if (fallbackWithPkg && !fs.existsSync(path.join(/* turbopackIgnore: true */ dir, "data"))) dir = fallbackWithPkg;
   return path.join(dir, "data", "cg-series");
 }
 const ROOT = resolveRoot();
@@ -260,6 +265,13 @@ export function lastTs(name: string, keyOf: (row: any) => string): number | null
 
 export function rowsOf(name: string, keyOf: (row: any) => string): unknown[] {
   return load(name, keyOf).rows;
+}
+
+/** The continuity engine persists verified 15-minute OHLCV candles. */
+export function archivedCandles(instrument: string, limit: number): OHLCVCandle[] {
+  const rows = rowsOf(`kline:${instrument}:m15`, (row: OHLCVCandle) => String(row.t)) as OHLCVCandle[];
+  return rows.filter((row) => [row.t, row.o, row.h, row.l, row.c, row.v].every(Number.isFinite) && row.c > 0)
+    .sort((a, b) => a.t - b.t).slice(-limit);
 }
 
 export function markPoll(name: string, keyOf: (row: any) => string, error?: string) {
