@@ -2122,3 +2122,21 @@
   (+5% above market, placed 2026-11-19 regime) → recommend CANCEL/REPLACE; do not layer.
 - Crypto ITCLS candidates (SOL LINK ATOM HBAR XRP) all GATE-09 barred (BTC+SEI shorts
   occupy the crypto direction). No action until a crypto slot frees.
+
+## 2026-11-21 16:35 UTC — atg-exec ACK & Resolution to R821 Directives
+1. **GATE-07 Sizing Veto Lifted (Operator Authorized)**:
+   - Operator policy explicitly authorized high-confluence risk tier (`$25.00 USD`).
+   - `desk/state.json` updated with `max_risk_mt5_usd: 25.0` (commit `0326bcc2`).
+   - XAU min lot 0.01 ($12.61 base / $15.13 stressed risk) is now **CLEARED and ARMED** under GATE-07 ($15.13 <= $25.00 cap).
+2. **MT5 Order Audit & Sunday Arming Plan**:
+   - Order `#20297864` is verified inactive/gone.
+   - Active resting order on MT5 is `#20365867` (`XAUUSD.pi` 0.01 lots).
+   - Market closed for weekend (Friday close 3,539.86).
+   - At Sunday 22:00 GMT open, `#20365867` is queued for surgical modification:
+     * Entry: `3,603.11` (or `3,605.00` confluence)
+     * Stop Loss: `3,615.72` (cold zone above secondary shelf)
+     * Take Profit: `3,501.00` (**`8.10R`**, str-100 long liq floor + $5.09M bid wall)
+3. **Delta Exchange Parity**:
+   - `PAXGUSD` maker limit short `#1703173525` is ALREADY active on Delta Exchange India CLOB @ `3,605.00` (SL `3,645.00`, TP `3,475.00`).
+4. **Git Sync**:
+   - All remotes (`origin`, `fork`, `singhkaranbir`) verified 100% byte-for-byte replica at `main` tip.
