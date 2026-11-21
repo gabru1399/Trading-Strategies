@@ -19325,3 +19325,294 @@ ead_file validation.
 - None — data missing, HOLD (manual check)
 - None — data missing, HOLD (manual check)
 
+## R792 · 2026-11-21 00:14 UTC · zai-desk
+
+**Market**: BTC 58,972.8 (+0.1%)  ETH 1,623.57 (+0.1%)  SOL 68.78 (-0.1%)  XAU 3,545.42 (-0.1%)  XAG 41.390 (-0.1%)
+**Bias (|score|≥2)**: AVAX-6(TREND)  ADA-3(TREND)  XRP-3(TRANS)  BNB-4(TRANS)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R793 · 2026-11-21 00:33 UTC · zai-desk
+
+**Market**: BTC 59,052.5 (+0.2%)  ETH 1,625.57 (+0.2%)  SOL 69.06 (+0.3%)  XAU 3,545.49 (-0.1%)  XAG 41.390 (-0.1%)
+**Bias (|score|≥2)**: BNB-5(TREND)  AVAX-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R794 · 2026-11-21 00:51 UTC · zai-desk
+
+**Market**: BTC 59,103.5 (+0.3%)  ETH 1,625.53 (+0.2%)  SOL 68.97 (+0.2%)  XAU 3,547.91 (-0.0%)  XAG 41.420 (-0.0%)
+**Bias (|score|≥2)**: none significant
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R795 · 2026-11-21 01:11 UTC · zai-desk
+
+**Market**: BTC 59,058.1 (+0.2%)  ETH 1,622.89 (+0.1%)  SOL 68.93 (+0.2%)  XAU 3,551.04 (+0.1%)  XAG 41.460 (+0.1%)
+**Bias (|score|≥2)**: none significant
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R796 · 2026-11-21 01:29 UTC · zai-desk
+
+**Market**: BTC 58,981.7 (+0.1%)  ETH 1,620.43 (-0.1%)  SOL 68.79 (-0.0%)  XAU 3,548.87 (-0.0%)  XAG 41.430 (+0.0%)
+**Bias (|score|≥2)**: DOGE-5(TREND)  BNB-4(TREND)  ADA-4(TREND)  LINK-4(TREND)  AVAX-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R797 · 2026-11-21 01:46 UTC · zai-desk
+
+**Market**: BTC 58,945.6 (+0.1%)  ETH 1,622.27 (+0.0%)  SOL 68.88 (+0.1%)  XAU 3,545.93 (-0.1%)  XAG 41.410 (-0.0%)
+**Bias (|score|≥2)**: AVAX-4(TRANS)  BNB-4(TREND)  XAU-4(TREND)  BTC-2(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R798 · 2026-11-21 02:07 UTC · zai-desk
+
+**Market**: BTC 59,043.5 (+0.2%)  ETH 1,626.93 (+0.3%)  SOL 68.85 (+0.0%)  XAU 3,545.27 (-0.1%)  XAG 41.400 (-0.1%)
+**Bias (|score|≥2)**: BNB-4(TREND)  XAU-4(TRANS)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R799 · 2026-11-21 02:23 UTC · zai-desk
+
+**Market**: BTC 58,961.9 (+0.1%)  ETH 1,625.17 (+0.2%)  SOL 68.70 (-0.2%)  XAU 3,542.20 (-0.2%)  XAG 41.370 (-0.1%)
+**Bias (|score|≥2)**: LTC-3(TREND)  BTC-2(TREND)  ADA-4(TREND)  LINK-4(TREND)  AVAX-4(TREND)  XAU-4(TREND)  BNB-2(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R800 · 2026-11-21 02:40 UTC · zai-desk
+
+**Market**: BTC 58,961.9 (+0.1%)  ETH 1,625.17 (+0.2%)  SOL 68.70 (-0.2%)  XAU 3,542.20 (-0.2%)  XAG 41.370 (-0.1%)
+**Bias (|score|≥2)**: LTC-3(TREND)  BTC-2(TREND)  ADA-4(TREND)  LINK-4(TREND)  AVAX-4(TREND)  XAU-4(TREND)  BNB-2(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R801 · 2026-11-21 02:56 UTC · zai-desk
+
+**Market**: BTC 58,961.9 (+0.1%)  ETH 1,625.17 (+0.2%)  SOL 68.70 (-0.2%)  XAU 3,542.20 (-0.2%)  XAG 41.370 (-0.1%)
+**Bias (|score|≥2)**: LTC-3(TREND)  BTC-2(TREND)  ADA-4(TREND)  LINK-4(TREND)  AVAX-4(TREND)  XAU-4(TREND)  BNB-2(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R802 · 2026-11-21 03:15 UTC · zai-desk
+
+**Market**: BTC 58,435.9 (-0.8%)  ETH 1,611.50 (-0.6%)  SOL 68.22 (-0.9%)  XAU 3,539.43 (-0.3%)  XAG 41.330 (-0.2%)
+**Bias (|score|≥2)**: BTC-5(TREND)  ADA-6(TREND)  XRP-5(TREND)  AVAX-5(TREND)  BNB-5(TREND)  LINK-4(TREND)  SOL-3(TREND)  LTC-3(TREND)  DOGE-2(TREND)  ETH-2(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R803 · 2026-11-21 03:36 UTC · zai-desk
+
+**Market**: BTC 57,333.5 (-2.7%)  ETH 1,576.26 (-2.8%)  SOL 66.60 (-3.2%)  XAU 3,519.47 (-0.8%)  XAG 40.900 (-1.3%)
+**Bias (|score|≥2)**: XAU-6(TREND)  ADA-5(TREND)  AVAX-5(TREND)  BTC-4(TREND)  XRP-5(TREND)  BNB-4(TREND)  LINK-3(TREND)  LTC-3(TREND)  ETH-2(TREND)  DOGE-2(TREND)  SOL-2(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R804 · 2026-11-21 03:55 UTC · zai-desk
+
+**Market**: BTC 56,668.9 (-3.8%)  ETH 1,569.45 (-3.2%)  SOL 66.14 (-3.9%)  XAU 3,528.53 (-0.6%)  XAG 41.030 (-1.0%)
+**Bias (|score|≥2)**: BNB-5(TREND)  AVAX-4(TREND)  ADA-4(TREND)  XAU-4(TRANS)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R805 · 2026-11-21 04:14 UTC · zai-desk
+
+**Market**: BTC 55,957.3 (-5.0%)  ETH 1,559.62 (-3.8%)  SOL 65.93 (-4.2%)  XAU 3,524.09 (-0.7%)  XAG 40.900 (-1.3%)
+**Bias (|score|≥2)**: BNB-5(TREND)  AVAX-5(TREND)  ADA-5(TREND)  BTC-3(TREND)  DOGE-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R806 · 2026-11-21 04:31 UTC · zai-desk
+
+**Market**: BTC 55,807.3 (-5.3%)  ETH 1,551.00 (-4.4%)  SOL 65.44 (-4.9%)  XAU 3,521.93 (-0.8%)  XAG 40.910 (-1.3%)
+**Bias (|score|≥2)**: AVAX-5(TREND)  BNB-3(TREND)  BTC-2(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R807 · 2026-11-21 04:50 UTC · zai-desk
+
+**Market**: BTC 56,408.9 (-4.3%)  ETH 1,565.77 (-3.5%)  SOL 66.10 (-4.0%)  XAU 3,532.93 (-0.5%)  XAG 41.080 (-0.8%)
+**Bias (|score|≥2)**: AVAX-4(TREND)  ADA-4(TREND)  BNB-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R808 · 2026-11-21 05:10 UTC · zai-desk
+
+**Market**: BTC 56,305.6 (-4.4%)  ETH 1,564.76 (-3.5%)  SOL 66.00 (-4.1%)  XAU 3,526.64 (-0.6%)  XAG 41.020 (-1.0%)
+**Bias (|score|≥2)**: BNB-5(TREND)  ADA-5(TREND)  AVAX-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R809 · 2026-11-21 05:29 UTC · zai-desk
+
+**Market**: BTC 56,154.6 (-4.7%)  ETH 1,569.93 (-3.2%)  SOL 66.11 (-3.9%)  XAU 3,527.60 (-0.6%)  XAG 41.040 (-0.9%)
+**Bias (|score|≥2)**: AVAX-6(TREND)  BNB-5(TREND)  ADA-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R810 · 2026-11-21 05:31 UTC · zai-desk
+
+**Market**: BTC 56,016.1 (-4.9%)  ETH 1,563.72 (-3.6%)  SOL 65.59 (-4.7%)  XAU 3,525.49 (-0.7%)  XAG 41.000 (-1.0%)
+**Bias (|score|≥2)**: AVAX-6(TREND)  BNB-6(TREND)  ADA-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+
+## ROUND FAILED · 2026-11-21 05:49 UTC · zai-desk
+
+analysis script rc=139
+
+## R811 · 2026-11-21 06:08 UTC · zai-desk
+
+**Market**: BTC 55,772.4 (-5.3%)  ETH 1,559.05 (-3.9%)  SOL 65.56 (-4.7%)  XAU 3,523.88 (-0.7%)  XAG 40.960 (-1.1%)
+**Bias (|score|≥2)**: BNB-7(TREND)  ADA-6(TREND)  AVAX-5(TREND)  BTC-3(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R812 · 2026-11-21 06:26 UTC · zai-desk
+
+**Market**: BTC 55,972.5 (-5.0%)  ETH 1,564.79 (-3.5%)  SOL 65.92 (-4.2%)  XAU 3,525.19 (-0.7%)  XAG 41.050 (-0.9%)
+**Bias (|score|≥2)**: BNB-5(TREND)  ADA-5(TREND)  AVAX-5(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R813 · 2026-11-21 06:45 UTC · zai-desk
+
+**Market**: BTC 57,184.4 (-2.9%)  ETH 1,621.57 (-0.0%)  SOL 67.54 (-1.9%)  XAU 3,532.42 (-0.5%)  XAG 41.320 (-0.3%)
+**Bias (|score|≥2)**: BTC+2(TRANS)  ADA-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
