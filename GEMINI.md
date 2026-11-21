@@ -252,3 +252,55 @@ During Step 5 candidate evaluations, the 4 legendary investor personas and rule-
 1. **Rule-Based Screening**: Fundamental scoring (ROE, margins, debt, revenue growth) and valuation models (DCF, owner earnings).
 2. **Persona Multi-Lens Consensus**: Aggregating Buffett, Wood, Burry, and Lynch votes into a weighted consensus score.
 3. **Microstructure Confluence Binding**: Merging the investor consensus with live order-flow telemetry (CVD, book walls, liquidation sweep shelves) to establish undisputed institutional A+ trade geometry.
+
+---
+
+## 9. MANDATORY UNIFIED COGNITIVE REASONING PROTOCOL (ZERO-OMISSION THINKING CHAIN)
+
+> **PRIMARY OPERATIONAL DIRECTIVE & ANTI-SKIPPING INVARIANT**:
+> On EVERY turn, analysis, and trade candidate formulation, Antigravity's internal thinking chain (`<thought>`) MUST explicitly, systematically, and deterministically articulate each of the following 10 reasoning stages without omitting or compressing a single section:
+
+```mermaid
+flowchart TD
+    T0["Stage 0: Physical Grounding Verification (Rules, Plugins, Skills)"] --> T1["Stage 1: Section 21 Quant Microstructure & Adverse Selection Audit"]
+    T1 --> T2["Stage 2: Section 6 & 22 Strategy (S0-S13) & Entry Archetype (EA-1-7)"]
+    T2 --> T3["Stage 3: Section 7 Retail Pattern ⟷ Institutional Order-Flow"]
+    T3 --> T4["Stage 4: Section 15 Athena Oracle 6-God Breakdown"]
+    T4 --> T5["Stage 5: Section 9 Table 7 8-Factor Itemized Scoring"]
+    T5 --> T6["Stage 6: Section 8 6-Step DECIDE Framework (D1, E1, C1, I1, D2, E2)"]
+    T6 --> T7["Stage 7: Section 10 & 19 Gate & Pitfall Inquests (GATE 1-11, PIT 1-22)"]
+    T7 --> T8["Stage 8: Super Hedge Fund 4-Persona Consensus (Buffett, Wood, Burry, Lynch)"]
+    T8 --> T9["Stage 9: Section 24 Pre-Submit Self-Checks (CHK-A, CHK-B, CHK-C, CHK-D)"]
+    T9 --> T10["Stage 10: Section 25 7-Stage Trade Formulation Chain (PERCEIVE to COMMIT)"]
+```
+
+### 9.1 The 10 Mandatory Cognitive Stages in `<thought>`:
+1. **Stage 0: Physical Grounding Check**: Read and cite paths for `trading-skills`, `gravitas`, `kaizen-agent`, `super-hedge-fund-skill`, `quant-analyst`, and `CANONICAL_MASTER_SPECIFICATION.md`.
+2. **Stage 1: Section 21 Quantitative Microstructure Audit**:
+   - Volume/OI Regime Classification (Regime I: Liquidation Snap-Back, Regime II: Trend Initiation, Regime III: Absorption Drift, Regime IV: Unwinding Squeeze).
+   - Toxic Flow Vector ($\Delta\text{CVD} \ge 2.5\sigma$, Footprint delta $> 65\%$, `Liq 5m > $500k`) and Adverse Selection Buffer.
+   - Tanh Smoothing ($\eta_i = \tanh(Z/\kappa)$) & Volatility-Inverted Sizing ($w_i \propto E_i/\sigma_i^2$).
+   - 8-Bar Stale Order Pruning Check ($>1.5\%$ drift or 2 hours without progress).
+3. **Stage 2: Section 6 & 22 Strategy & Entry Archetype Mapping**:
+   - Strategy Archetype: S0 (ITCLS), S1, S2, ..., S13.
+   - Entry Archetype: EA-1 (OFI Trigger), EA-2 (Sweep Acceptance), EA-3 (VA Delta Reversion), EA-4 (RVOL ORB), EA-5 (Cascade Recovery), EA-6 (ITSM Prior), EA-7 (Trend Shelf).
+   - Citing supporting SSRN papers (P1 Cont-Kukanov-Stoikov, P2 Xu-Gould, P6 Rehan, P8 Howard, P10 Lim, P12 Barone).
+4. **Stage 3: Section 7 Retail Pattern ⟷ Institutional Order Flow Translation**:
+   - Identify retail chart setup (RET-R01 to RET-R09).
+   - Unmask institutional reality: Who is trapped? Where are retail stops clustered? What does CVD and Footprint confirm?
+5. **Stage 4: Section 15 Athena Oracle 6-God Breakdown**:
+   - Apollo (25%), Poseidon (20%), Hades (15%), Zeus (15%), Atlas (15%), Nemesis (10%). Total composite: 0–100.
+6. **Stage 5: Section 9 Table 7 8-Factor Itemized Scoring**:
+   - Granular scoring across all 8 factors (Trend +2.0, VWAP +1.5, Footprint +2.0, Whale Wall +1.5, CVD +1.0, Liquidity Magnet +1.5, Funding/GEX +1.0, Spread Drag +1.0) with grounded live telemetry.
+7. **Stage 6: Section 8 6-Step DECIDE Framework**:
+   - Step through DEC-D1 (Direction Bias), DEC-E1 (Entry Zone), DEC-C1 (Confluence), DEC-I1 (Invalidation), DEC-D2 (Targets T1/T2/T3), DEC-E2 (Execution Sizing).
+8. **Stage 7: Section 10 & 19 Risk Inquests & Lessons**:
+   - Itemized audit of GATE-01 through GATE-11 and INQ-01 through INQ-10.
+   - Screening against all 22 Microstructure Lessons (PIT-01 through PIT-22: cold zone SL, 5x spread ratio, maker post-only).
+9. **Stage 8: Super Hedge Fund 4-Persona Consensus Matrix**:
+   - Independent qualitative/quantitative votes from Warren Buffett, Cathie Wood, Michael Burry, and Peter Lynch.
+10. **Stage 9: Section 24 Pre-Submit Self-Checks & Section 25 7-Stage Chain**:
+    - Validate CHK-A (Identity), CHK-B (Freshness), CHK-C (Slot/Heat), CHK-D (Disposition Completeness).
+    - Articulate the 7 stages: 1 PERCEIVE $\to$ 2 LOCATE $\to$ 3 HYPOTHESIZE $\to$ 4 INVALIDATE $\to$ 5 STRUCTURE $\to$ 6 SIZE $\to$ 7 COMMIT/STAND DOWN.
+    - Emit the Canonical Score-Line.
+
