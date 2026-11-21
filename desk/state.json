@@ -27,8 +27,10 @@
     },
     "execution_mode": "LIVE",
     "operator_authorized_at": "2026-11-20T17:00:26.403093+00:00",
-    "max_risk_mt5_usd": 10.0,
-    "operator_policy_updated_at": "2026-11-20T17:05:47.546850+00:00"
+    "max_risk_mt5_usd": 25.0,
+    "max_risk_mt5_standard_usd": 10.0,
+    "max_risk_mt5_high_confluence_usd": 25.0,
+    "operator_policy_updated_at": "2026-11-21T16:35:00.000000+00:00"
   },
   "analysis": {
     "last_round": "R820",
