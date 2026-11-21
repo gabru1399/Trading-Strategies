@@ -4,7 +4,7 @@ from decimal import Decimal
 from math import isfinite
 
 STRESS = Decimal("1.20")
-HARD_CAP_USD = Decimal("6.00")
+HARD_CAP_USD = Decimal("10.00")  # Canonical MT5-02 ceiling (authorized by operator for $10.00 risk envelope).
 ACCOUNT_LOGIN = 5126976
 
 
