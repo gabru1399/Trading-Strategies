@@ -17,6 +17,7 @@ strength >= 45.
 """
 import json
 import time
+from pathlib import Path
 import urllib.request
 import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -226,9 +227,10 @@ def main():
         print(f"  {r['sym']:<10}{r.get('reason','?')}")
 
     out = {"ts": int(time.time() * 1000), "candidates": cands, "near": near, "failed": failed}
-    with open("/home/z/my-project/data/desk-screen-itcls.json", "w") as f:
+    out_path = Path(__file__).resolve().parent.parent / "data" / "desk-screen-itcls.json"
+    with open(out_path, "w") as f:
         json.dump(out, f, indent=1)
-    print(f"\nsaved -> data/desk-screen-itcls.json")
+    print(f"\nsaved -> {out_path}")
 
 
 if __name__ == "__main__":

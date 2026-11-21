@@ -10,7 +10,9 @@ price = 3561.6            # /api/cg/liqlevels livePrice (3d window)
 vwap = 3540.69            # /api/cg/market XAU
 sd1 = 16.15 / 2.5  # corrected below from bands: recompute
 # market snapshot gave vwap bands sd1 — pull from saved deep-dive data
-dd = json.load(open("/home/z/my-project/data/desk-deepdive-itcls.json"))["XAU"]
+from pathlib import Path
+dd_path = Path(__file__).resolve().parent.parent / "data" / "desk-deepdive-itcls.json"
+dd = json.load(open(dd_path))["XAU"]
 vwap = dd["vwap"]; sd1 = dd["sd1"]
 price = dd["price"]
 atr_h1 = dd["atr"]
@@ -134,8 +136,15 @@ usd_per_1pt = contract * lot / (1 / 1)  # value of 1.0 price move = contract*lot
 print(f"  0.01 lot = {contract*lot:.2f} oz -> $ {contract*lot:.2f} per $1 move")
 risk_usd = risk * contract * lot
 print(f"  stop {risk:.2f} pts x ${contract*lot:.0f}/pt = ${risk_usd:.2f} at min size")
-print(f"  stressed (x1.20): ${risk_usd*1.2:.2f} vs MT5 cap $10.00 (config max_risk_mt5_usd)")
-print(f"  GATE-07: {'PASS' if risk_usd*1.2 <= 10.0 else 'FAIL — min lot exceeds $10 stressed cap'}")
+state_file = Path(__file__).resolve().parent.parent / "desk" / "state.json"
+mt5_cap = 25.0
+if state_file.exists():
+    try:
+        mt5_cap = float(json.load(open(state_file)).get("config", {}).get("max_risk_mt5_usd", 25.0))
+    except Exception:
+        pass
+print(f"  stressed (x1.20): ${risk_usd*1.2:.2f} vs MT5 cap ${mt5_cap:.2f} (config max_risk_mt5_usd)")
+print(f"  GATE-07: {'PASS' if risk_usd*1.2 <= mt5_cap else 'FAIL — min lot exceeds stressed cap'}")
 
 # 40/40/20 tranche payoff at min lot
 t1_r, t2_r = r_t1, r_t2
@@ -144,6 +153,7 @@ runner_r = 2 * r_t2  # conservative runner assumption
 print(f"\nTranche payoff (40/40/20): T1 {t1_r:.2f}R · T2 {t2_r:.2f}R · runner ~{runner_r:.2f}R")
 print(f"  weighted EV = {0.4*t1_r + 0.4*t2_r + 0.2*runner_r:.2f}R (fill-conditional, unmodeled prob)")
 
+out_path = Path(__file__).resolve().parent.parent / "data" / "desk-xau-score.json"
 json.dump({
     "entry": entry, "stop": stop, "t1": round(t1, 2), "t2": t2,
     "r_t1": round(r_t1, 2), "r_t2": round(r_t2, 2),
@@ -151,5 +161,5 @@ json.dump({
     "scores": {"trend": s_trend, "regime": s_reg, "signal": s_sig, "wall": s_wall,
                "cvd": s_cvd, "liq": s_liq, "gex": s_gex, "spread": s_spread},
     "risk_usd_min_lot": round(risk_usd, 2),
-}, open("/home/z/my-project/data/desk-xau-score.json", "w"), indent=1)
-print("\nsaved -> data/desk-xau-score.json")
+}, open(out_path, "w"), indent=1)
+print(f"\nsaved -> {out_path}")

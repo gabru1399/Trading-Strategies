@@ -13,9 +13,11 @@ import json
 import time
 import urllib.request
 
+from pathlib import Path
+
 BASE_URL = "http://localhost:3000"
-CANDS = ["XAU", "SOL", "LINK", "ATOM", "HBAR", "XRP"]
-OUT = "/home/z/my-project/data/desk-deepdive-itcls.json"
+CANDS = ["XAU", "XAG", "NVDA", "SOL", "LINK", "ATOM", "HBAR", "XRP"]
+OUT = Path(__file__).resolve().parent.parent / "data" / "desk-deepdive-itcls.json"
 
 
 def fetch(endpoint, timeout=30):
