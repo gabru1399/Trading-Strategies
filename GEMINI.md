@@ -144,15 +144,22 @@ In the model thinking process (`<thought>`), Antigravity MUST explicitly state:
 
 ## 5. CANONICAL ROUND EXECUTION & SOP GOVERNANCE
 
-- Follow [`desk/CANONICAL_MASTER_SPECIFICATION.md`](file:///C:/Users/SIGMA/Documents/Trading-Strategies/desk/CANONICAL_MASTER_SPECIFICATION.md) strictly.
-- Run canonical rounds via `scripts/agent_wake_verification.py --round R<number>` and `run_sop_reads.py`.
+### 5.1 MANDATORY LINE-BY-LINE & SECTION-BY-SECTION EXECUTION TILL END
+> **NON-NEGOTIABLE CANONICAL MANDATE**:
+> Antigravity MUST strictly read, follow, and execute each and every single line and section of `desk/CANONICAL_MASTER_SPECIFICATION.md` (`c:\Users\SIGMA\Documents\Trading-Strategies\CG-Terminal\desk\CANONICAL_MASTER_SPECIFICATION.md`) from line 1 through line 1,763 to the very end.
+> It is strictly MANDATORY NOT to skip even a single line, paragraph, rule, table, gate, or appendix for consideration until the absolute end of the specification.
+> All 66 section anchors (`kernel`, `launch-prompt`, `sec-0` through `sec-25`, and `appendix-a` through `appendix-g`) must have verified section receipts generated, achieving 100% SOP coverage (`lines_read: 1763/1763`, `unread_anchors: []`, `section_steps_complete: 12`) verified via `scripts/agent_wake_verification.py --round R<number> --require-formulation-reads` before any candidate dossier or trade formulation can be established.
+
+### 5.2 CANONICAL STEP EXECUTION RUNBOOK
+- Follow [`desk/CANONICAL_MASTER_SPECIFICATION.md`](file:///C:/Users/SIGMA/Documents/Trading-Strategies/desk/CANONICAL_MASTER_SPECIFICATION.md) strictly line-by-line from start to finish.
+- Run canonical rounds via `scripts/agent_wake_verification.py --round R<number>` and `walk_sop_reads.py R<number>`.
 - Execute Steps 0–11 in strict sequence:
   - Step 0: Wake & Lessons
   - Step 1: Pre-flight & Tooling Verification
   - Step 2: Operator Inquest
   - Step 3: Account & Scope Manifest Reconciliation
   - Step 4: Full Universe Screening across 5 Funnels
-  - Step 5: Candidate & Lifecycle Dossiers (9-tab evidence, D01–D16, 8-Voice Council, 10 Mental Models)
+  - Step 5: Candidate & Lifecycle Dossiers (9-tab evidence, D01–D16, 8-Voice Council, 4-Investor Personas Consensus, 10 Mental Models)
   - Step 6: Risk Gates (C-01…C-10, GATE-01…11, PIT-01…22)
   - Step 7: Pending Order Audit & Management (KEEP, PRUNE, READ_ONLY)
   - Step 8: Running Position Oversight & Trailing Stops
