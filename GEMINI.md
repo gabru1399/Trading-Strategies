@@ -147,3 +147,36 @@ In the model thinking process (`<thought>`), Antigravity MUST explicitly state:
   - Step 11: Journal, Evidence Bundle & Scheduler
 - Save all raw evidence under `CG-Terminal/data/round-evidence/R<number>/`.
 - Synchronize all commits to GitHub repository: `https://github.com/singhkaranbir842-sys/Trading-Strategies.git` authored by `singhkaranbir842 <singhkaranbir842@gmail.com>`.
+
+---
+
+## 5. DEFAULT EXECUTION ARCHITECTURE: HTF TREND + COUNTER-TREND LIQUIDATION SWEEP (ITCLS)
+
+> **CORE TRADING AXIOM**:
+> The default, primary trade construction across all rounds and screening cycles is **Higher-Timeframe (HTF) Trend Alignment paired with Counter-Trend Liquidation Sweep Execution**.
+> We NEVER chase aggressive breakout candles or short into breakdown lows where retail gets trapped and squeezed. Instead, we allow the market to engineer liquidity against the HTF trend, enter passively where trapped leverage gets liquidated, and ride the trend continuation.
+
+### 5.1 The Two Canonical Execution Archetypes
+
+1. **Bearish HTF Regime (Default Short Archetype)**:
+   - **Condition**: HTF Trend (4h/Daily EMA stack 13 < 89 < 233, session auction value migrating lower).
+   - **Trigger Mechanism**: Prohibit selling breakdowns. Wait for the counter-trend short squeeze to rally into the overhead **Short Liquidation Shelves** (identified via `/api/cg/liqlevels` and Coinglass heatmaps).
+   - **Entry**: Place a resting Sell Limit order directly inside the confluent peak short liquidation cluster (e.g. BTC `$60,850`, ETH `$1,703`, SOL `$70.35`, BNB `$546.00`, Gold/PAXG `$3,605.00`) to absorb forced market buy orders from liquidated shorts.
+   - **Stop Loss**: Position in the structural cold vacuum above the secondary shelf, strictly clearing PIT-18 broker spread clearance ($\text{Distance} \ge 5 \times \text{Spread}$).
+   - **Take Profit**: Target the deep **Long Liquidation Support Floor** below market price where institutional dip-buyers sit.
+
+2. **Bullish HTF Regime (Default Long Archetype)**:
+   - **Condition**: HTF Trend (4h/Daily EMA stack 13 > 89 > 233, session auction value migrating higher).
+   - **Trigger Mechanism**: Prohibit buying breakouts. Wait for the counter-trend liquidation cascade to flush down into the **Long Liquidation Support Floor**.
+   - **Entry**: Place a resting Buy Limit order directly inside the primary long liquidation absorption shelf.
+   - **Stop Loss**: Position in the structural cold void below the liquidation floor, respecting venue risk caps.
+   - **Take Profit**: Target the overhead **Short Liquidation Magnet** for trend continuation.
+
+### 5.2 Venue Execution Protocols
+- **Delta Exchange India (`26902927`)**:
+  - 100% passive maker orders (`post_only: true`).
+  - Strict max risk cap: **`$0.50 USD`** / Margin ceiling: **`$1.50 USD`**.
+- **Blueberry Markets MT5 (`5126976`)**:
+  - Binding risk ceiling: **`$6.00 USD`** per ticket (Erratum A-24).
+  - Mandatory PIT-18 spread clearance: Stop distance must exceed $5\times$ live broker spread.
+  - Active runner protection: At $\ge +1.0\text{R}$ excursion, ratchet Stop Loss to Breakeven+.
