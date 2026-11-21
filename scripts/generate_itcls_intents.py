@@ -181,9 +181,25 @@ def analyze_asset_itcls(sym):
         "SOL": 0.1,
         "BNB": 0.01,
         "PAXG": 0.001,
-        "XAU": 0.001
+        "XAU": 0.001,
+        "XRP": 1.0,
+        "DOGE": 10.0,
+        "ADA": 1.0,
+        "LINK": 0.1,
+        "LTC": 0.01,
+        "AVAX": 0.1,
+        "SUI": 1.0,
+        "NEAR": 0.1,
+        "APT": 0.1,
+        "ARB": 1.0,
+        "OP": 1.0,
+        "DOT": 0.1,
+        "ATOM": 0.1,
+        "XLM": 10.0,
+        "FIL": 0.1,
+        "ETC": 0.01
     }
-    unit = contract_units.get(sym.upper(), 0.01)
+    unit = contract_units.get(sym.upper(), 0.1 if entry_price > 10 else 1.0)
     loss_per_contract = risk_dist * unit
     delta_contracts = max(1, int(delta_risk_cap / max(loss_per_contract, 0.0001))) if loss_per_contract > 0 else 1
     # Check stressed loss
@@ -198,9 +214,25 @@ def analyze_asset_itcls(sym):
         "SOL": 0.08,
         "BNB": 0.60,
         "XAU": 0.35,
-        "PAXG": 0.35
+        "PAXG": 0.35,
+        "XRP": 0.004,
+        "DOGE": 0.0005,
+        "ADA": 0.003,
+        "LINK": 0.03,
+        "LTC": 0.25,
+        "AVAX": 0.05,
+        "SUI": 0.005,
+        "NEAR": 0.008,
+        "APT": 0.02,
+        "ARB": 0.003,
+        "OP": 0.004,
+        "DOT": 0.01,
+        "ATOM": 0.01,
+        "XLM": 0.0008,
+        "FIL": 0.01,
+        "ETC": 0.04
     }
-    spread = mt5_spreads.get(sym.upper(), 1.0)
+    spread = mt5_spreads.get(sym.upper(), 0.01 if entry_price < 10 else 0.5)
     
     # Auto-adjust MT5 SL to satisfy PIT-18: distance >= 5 * spread (spread/dist <= 0.20)
     min_mt5_dist = spread * 5.05 # slight buffer
@@ -252,23 +284,34 @@ def analyze_asset_itcls(sym):
         }
     }
 
+ALL_CURATED_CRYPTO = [
+    "BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "LINK", "LTC", "AVAX",
+    "SUI", "NEAR", "APT", "ARB", "OP", "DOT", "ATOM", "XLM", "FIL", "ETC",
+    "PAXG"
+]
+
 def main():
     parser = argparse.ArgumentParser(description="Generate ITCLS In-Trend Counter-Liquidation Sweep Trade Intents")
     parser.add_argument("--syms", default="BTC,ETH,SOL,BNB,PAXG", help="Comma-separated symbols to evaluate")
+    parser.add_argument("--all-crypto", action="store_true", help="Evaluate all curated crypto assets")
     parser.add_argument("--json", action="store_true", help="Output raw JSON")
     args = parser.parse_args()
 
-    sym_list = [s.strip() for s in args.syms.split(",") if s.strip()]
+    if args.all_crypto:
+        sym_list = ALL_CURATED_CRYPTO
+    else:
+        sym_list = [s.strip() for s in args.syms.split(",") if s.strip()]
+
     results = []
 
     print(f"=== IN-TREND COUNTER-LIQUIDATION SWEEP (ITCLS) SOVEREIGN INTENT EVALUATION ===")
-    print(f"Target Assets: {', '.join(sym_list)}\n")
+    print(f"Target Assets ({len(sym_list)}): {', '.join(sym_list)}\n")
 
     for sym in sym_list:
         res = analyze_asset_itcls(sym)
         results.append(res)
         if not res.get("ok"):
-            print(f"[-] {sym}: SKIPPED — {res.get('reason')}")
+            print(f"[-] {sym:8s} | SKIPPED — {res.get('reason')}")
             continue
 
         side = res["side"]
@@ -284,7 +327,7 @@ def main():
         m = res["mt5"]
 
         print(f"================================================================================")
-        print(f"[+] ASSET: {res['sym']} | HTF BIAS: {bias} | DEFAULT SETUP: S0/ITCLS ({side})")
+        print(f"[+] ASSET: {res['sym']:8s} | HTF BIAS: {bias:7s} | DEFAULT SETUP: S0/ITCLS ({side})")
         print(f"    Current Mark: {res['last_price']} -> Liquidation Shelf Entry: {entry} ({res['dist_pct']:+.2f}%)")
         print(f"    Shelf Size: ${res['shelf_usd']:,.0f} USD (Strength: {res['shelf_strength']}/100) | LSR: {res['lsr']}:1")
         print(f"    Structural SL: {sl} (Distance: {sl_pct}%)")
@@ -292,6 +335,17 @@ def main():
         print(f"    [VENUE: DELTA INDIA] Contracts: {d['contracts']} | Risk: ${d['stressed_risk_usd']} USD (<= ${d['cap_usd']}) | 100% MAKER POST-ONLY")
         print(f"    [VENUE: BLUEBERRY MT5] SL: {m['sl']} | Lots: {m['lots']} | Stressed Risk: ${m['stressed_risk_usd']} USD (<= ${m['cap_usd']}) | PIT-18: {'PASS' if m['pit18_pass'] else 'FAIL'} (ratio {m['pit18_ratio']})")
         print(f"================================================================================\n")
+
+    # Print Summary Matrix
+    print("\n" + "=" * 115)
+    print(f"{'SYM':<8} | {'HTF BIAS':<8} | {'SETUP':<6} | {'MARK':<11} | {'ENTRY':<11} | {'DIST %':<7} | {'SL':<11} | {'TARGET 2':<11} | {'PAYOFF':<7} | {'DELTA':<7} | {'MT5':<7}")
+    print("-" * 115)
+    for r in results:
+        if not r.get("ok"):
+            print(f"{r['sym']:<8} | {'N/A':<8} | {'N/A':<6} | {'N/A':<11} | {'N/A':<11} | {'N/A':<7} | {'N/A':<11} | {'N/A':<11} | {'N/A':<7} | {'N/A':<7} | {'N/A':<7}")
+            continue
+        print(f"{r['sym']:<8} | {r['htf_bias']:<8} | {r['side']:<6} | {r['last_price']:<11} | {r['entry_price']:<11} | {r['dist_pct']:>+6.2f}% | {r['stop_loss']:<11} | {r['target_2']:<11} | {r['net_t2_r']:>5.2f}R | ${r['delta']['stressed_risk_usd']:<5} | ${r['mt5']['stressed_risk_usd']:<5}")
+    print("=" * 115 + "\n")
 
     if args.json:
         print("\n--- JSON OUTPUT ---")
