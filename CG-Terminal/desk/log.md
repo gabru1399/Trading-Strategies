@@ -19616,3 +19616,55 @@ analysis script rc=139
 - None — data missing, HOLD (manual check)
 - None — data missing, HOLD (manual check)
 
+## R814 · 2026-11-21 07:16 UTC · zai-desk
+
+**Market**: BTC 58,065.1 (-1.4%)  ETH 1,633.55 (+0.7%)  SOL 67.91 (-1.3%)  XAU 3,542.63 (-0.2%)  XAG 41.390 (-0.1%)
+**Bias (|score|≥2)**: ADA-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R815 · 2026-11-21 07:36 UTC · zai-desk
+
+**Market**: BTC 58,265.9 (-1.1%)  ETH 1,636.81 (+0.9%)  SOL 67.92 (-1.3%)  XAU 3,539.59 (-0.3%)  XAG 41.310 (-0.3%)
+**Bias (|score|≥2)**: AVAX-4(TRANS)  ADA-4(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R816 · 2026-11-21 07:57 UTC · zai-desk
+
+**Market**: BTC 57,989.0 (-1.6%)  ETH 1,629.19 (+0.4%)  SOL 67.45 (-2.0%)  XAU 3,537.03 (-0.3%)  XAG 41.280 (-0.4%)
+**Bias (|score|≥2)**: ADA-4(TRANS)  BNB-4(TREND)  AVAX-4(TRANS)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
+## R817 · 2026-11-21 08:17 UTC · zai-desk
+
+**Market**: BTC 57,894.3 (-1.7%)  ETH 1,629.33 (+0.5%)  SOL 67.35 (-2.1%)  XAU 3,535.35 (-0.4%)  XAG 41.270 (-0.4%)
+**Bias (|score|≥2)**: ADA-4(TRANS)  BNB-4(TRANS)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
