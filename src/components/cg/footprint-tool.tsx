@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import FootprintCanvas, { type FootprintMode, type FootprintUnit } from "./charts/footprint-canvas";
+import FootprintCanvas, { type FootprintMode, type FootprintUnit, type HoverCell, type ZoneLine } from "./charts/footprint-canvas";
 import { usePolling } from "./use-cg-data";
 import {
   autoThreshold,
@@ -90,6 +90,76 @@ interface SignalSet {
   sigs: CgSignal[];
 }
 
+/** a key liq zone from the Liq Levels tab (Coinglass estimates) */
+interface Zone {
+  side: "short" | "long"; // side of the LIQUIDATIONS at that price
+  price: number;
+  distPct: number;
+  lev: string;
+  strength: number;
+  usd: number;
+}
+
+interface LiqLevelsResponse {
+  ok: boolean;
+  supported?: boolean;
+  sym: string;
+  livePrice?: number;
+  stats?: { keyLevels?: { above?: Zone[]; below?: Zone[] } };
+}
+
+/**
+ * Asset row-size ladder — the Coinglass "Row size" dropdown values for the
+ * aggregated footprint, mined from the page + verified against our API's
+ * native fp ticks (2026-11-22): BTC 5/10, ETH 0.5, BNB 0.3, XAU 0.3, XAG
+ * 0.01... The first entry is each asset's native tick (what the upstream
+ * grid uses); larger entries are the clean multiples the page offers.
+ */
+const ROW_LADDER: Record<string, number[]> = {
+  BTC: [5, 10, 25, 50, 100],
+  ETH: [0.5, 1, 2.5, 5, 10],
+  BNB: [0.3, 0.6, 1.5, 3],
+  SOL: [0.01, 0.03, 0.05, 0.1, 0.25],
+  XRP: [0.0001, 0.0003, 0.0005, 0.001],
+  DOGE: [0.00001, 0.00003, 0.0001, 0.0003],
+  ADA: [0.0001, 0.0003, 0.0005, 0.001],
+  XAU: [0.3, 0.6, 1.5, 3],
+  XAG: [0.01, 0.02, 0.05, 0.1],
+};
+const DEFAULT_LADDER = [1, 2, 5, 10, 25];
+
+/** a zone-strike entry candidate: the operator's setup (2026-11-22) */
+interface ZoneStrike {
+  zone: Zone;
+  dir: "short" | "long"; // trade direction
+  ts: number; // bar that struck the zone
+  topZero: boolean; // finished auction: zero at the top of the bar
+  dominantSide: "buy" | "sell" | null; // who dominates the top rows
+  domRatio: number; // dominance ratio (buy/sell or sell/buy)
+  price: number; // bar close
+  topBuy: number; // top-3 native rows buy volume
+  topSell: number; // top-3 native rows sell volume
+}
+
+/**
+ * Finished-auction check on a bar (the operator's "zero at top" rule):
+ * the topmost traded rows of the bar show the attacking side exhausted —
+ * sells 0 (or ≥ ratio× smaller) after a rally into a SHORT zone, buys 0
+ * after a decline into a LONG zone. Returns the top-N native rows' split.
+ */
+function topRowsSplit(bar: FpBar, n = 3): { buy: number; sell: number } {
+  if (!bar.fp) return { buy: 0, sell: 0 };
+  const fp = bar.fp;
+  let buy = 0;
+  let sell = 0;
+  const last = Math.min(fp.b.length, n);
+  for (let i = fp.b.length - 1; i >= fp.b.length - last; i--) {
+    buy += fp.b[i];
+    sell += fp.s[i];
+  }
+  return { buy, sell };
+}
+
 export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
   // ---- bar-type state (their prefs) ----
   const [tf, setTf] = useState<string>("m15");
@@ -106,6 +176,10 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
   const [activeSignal, setActiveSignal] = useState<CgSignal | null>(null);
   const [jump, setJump] = useState<{ ts: number; key: string } | null>(null);
   const [hoverBar, setHoverBar] = useState<FpBar | null>(null);
+  const [hoverCell, setHoverCell] = useState<HoverCell | null>(null);
+  // display row size — "auto" follows the MIN_ROW_H fit; a ladder value
+  // locks the grid to the Coinglass row size for this asset
+  const [rowSizeSel, setRowSizeSel] = useState<string>("auto");
 
   // symbol switch: every per-symbol UI selection (hovered bar, active signal,
   // jump target) belongs to the PREVIOUS asset's bar series — reset during
@@ -124,6 +198,22 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
   const tfQ = usePolling<FpResponse>(`/api/cg/fp?sym=${sym}&itv=${tf}&limit=300`, 10_000);
   // m1 series for volume / range bars (bounded to 300 bars for fast load)
   const m1Q = usePolling<FpResponse>(`/api/cg/fp?sym=${sym}&itv=m1&limit=300`, 30_000);
+  // key liq zones from the Liq Levels tab (the strike targets) — slow poll,
+  // Coinglass estimates refresh at their own cadence
+  const zoneQ = usePolling<LiqLevelsResponse>(`/api/cg/liqlevels?sym=${sym}`, 120_000);
+  const zones: Zone[] = useMemo(() => {
+    const d = zoneQ.data;
+    if (!d || d.sym !== sym || !d.ok) return [];
+    const kl = d.stats?.keyLevels;
+    return [...(kl?.above ?? []), ...(kl?.below ?? [])];
+  }, [zoneQ.data, sym]);
+  const zoneLines: ZoneLine[] = useMemo(
+    () =>
+      zones
+        .filter((z) => Math.abs(z.distPct) <= 4)
+        .map((z) => ({ price: z.price, side: z.side === "short" ? ("above" as const) : ("below" as const), usd: z.usd, distPct: z.distPct })),
+    [zones]
+  );
 
   // ---- LIVE LANES ----
   // fast REST lane: the last ≤8 bars of the ACTIVE bar-type's source series,
@@ -273,6 +363,69 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
     displayBars !== currentBars &&
     Date.now() - (forming.at ?? 0) < 5_000;
 
+  // stats strip + live ticker — the same real-time price the header shows (one truth)
+  const tk = useTicker(sym);
+  const lastBar = displayBars[displayBars.length - 1] ?? null;
+  const dp = symDecs(sym, tk.price ?? lastBar?.c ?? null);
+  const livePrice = tk.price ?? lastBar?.c ?? null;
+
+  // ---- ZONE-STRIKE ENTRY SCANNER (operator setup, 2026-11-22) ----
+  // Price strikes one of the key liq zones built in the Liquidation Levels
+  // tab, and the footprint shows a FINISHED AUCTION against the strike:
+  //   SHORT zone (above price) + top rows = sells ≈ 0 / buys exhausted
+  //   (buy ≈ 0 or sell ≥ 3× buy in the top 3 rows) → short candidate
+  //   LONG zone (below price) + top rows = buys dominant (buy ≥ 3× sell)
+  //   → long candidate. Zones are Coinglass estimates.
+  const zoneStrikes = useMemo(() => {
+    if (!zones.length || !displayBars.length) return [] as ZoneStrike[];
+    const out: ZoneStrike[] = [];
+    const win = displayBars.slice(-40); // scan the recent window
+    for (const bar of win) {
+      if (!bar.fp) continue;
+      for (const z of zones) {
+        if (Math.abs(z.distPct) > 4) continue; // only the near zones
+        const struck = bar.h >= z.price && bar.l <= z.price;
+        if (!struck) continue;
+        const { buy, sell } = topRowsSplit(bar, 3);
+        const dir = z.side === "short" ? "short" : "long";
+        // finished auction against the strike direction:
+        //  short: the rally died — zero/dominated buys at the top
+        //  long: the decline died — buys dominate the top
+        let topZero = false;
+        let dominantSide: "buy" | "sell" | null = null;
+        let domRatio = 0;
+        if (dir === "short") {
+          topZero = buy <= 1e-12 || sell >= 3 * buy;
+          dominantSide = sell > buy ? "sell" : buy > sell ? "buy" : null;
+          domRatio = buy > 0 ? sell / buy : sell > 0 ? Infinity : 0;
+        } else {
+          topZero = sell <= 1e-12 || buy >= 3 * sell;
+          dominantSide = buy > sell ? "buy" : sell > buy ? "sell" : null;
+          domRatio = sell > 0 ? buy / sell : buy > 0 ? Infinity : 0;
+        }
+        if (!topZero) continue;
+        out.push({ zone: z, dir, ts: bar.ts, topZero, dominantSide, domRatio, price: bar.c, topBuy: buy, topSell: sell });
+      }
+    }
+    // newest first, best zone (strength) first within a bar
+    return out.sort((a, b) => b.ts - a.ts || b.zone.strength - a.zone.strength).slice(0, 6);
+  }, [zones, displayBars]);
+
+  // the current price's zone context (which zone are we inside / nearest)
+  const zoneCtx = useMemo(() => {
+    if (!zones.length || livePrice == null) return null;
+    let nearest: Zone | null = null;
+    let nd = Infinity;
+    for (const z of zones) {
+      const d = Math.abs(z.price - livePrice);
+      if (d < nd) {
+        nd = d;
+        nearest = z;
+      }
+    }
+    return nearest ? { zone: nearest, distPct: ((nearest.price - livePrice) / livePrice) * 100 } : null;
+  }, [zones, livePrice]);
+
   const onSignalClick = (g: CgSignal, set: SignalSet) => {
     setActiveSignal(g);
     // switch to the signal's bars (their gotoSig) and jump the chart to it
@@ -320,15 +473,11 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
     return diagonalImbalances(focusBar.fp, ratio);
   }, [focusBar, ratio]);
 
-  // stats strip + live ticker — the same real-time price the header shows (one truth)
-  const tk = useTicker(sym);
-  const lastBar = displayBars[displayBars.length - 1] ?? null;
-  const dp = symDecs(sym, tk.price ?? lastBar?.c ?? null);
+  // stats strip + live ticker price already computed above (tk/lastBar/dp/livePrice)
   const latestSignal = currentSigs.length ? currentSigs.reduce((a, b) => (b.ts > a.ts ? b : a)) : null;
   const err = tfQ.error ?? m1Q.error;
   const missing = [...new Set([...(tfQ.data?.sym === sym ? tfQ.data.missing ?? [] : []), ...(m1Q.data?.sym === sym ? m1Q.data.missing ?? [] : [])])];
   const sigUnit: SigUnit = unit === "usd" ? "usd" : "qty";
-  const livePrice = tk.price ?? lastBar?.c ?? null;
 
   const marks = useMemo(
     () => currentSigs.map((s) => ({ ts: s.ts, dir: s.side === "buy" ? ("bullish" as const) : ("bearish" as const), type: s.t })),
@@ -408,6 +557,22 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
           </div>
         )}
 
+        {/* row size: the Coinglass "Row size" ladder per asset (auto = fit) */}
+        <label className="flex items-center gap-1.5 text-xs text-neutral-500">
+          Row size
+          <select
+            value={rowSizeSel}
+            onChange={(e) => setRowSizeSel(e.target.value)}
+            className="rounded border border-neutral-700 bg-neutral-900 px-1.5 py-1 text-[11px] text-neutral-200"
+          >
+            <option value="auto">auto</option>
+            {(ROW_LADDER[sym] ?? DEFAULT_LADDER).map((v) => (
+              <option key={v} value={String(v)}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="flex overflow-hidden rounded border border-neutral-700">
           {MODES.map((m) => (
             <button
@@ -495,7 +660,7 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
       )}
 
       {/* stats strip */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
         <Stat
           label="Latest price"
           value={livePrice != null ? fmtPriceDec(livePrice, dp) : "—"}
@@ -533,6 +698,16 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
           tone={latestSignal ? (latestSignal.side === "buy" ? "up" : "down") : undefined}
         />
         <Stat
+          label="Nearest liq zone"
+          value={zoneCtx ? fmtPriceDec(zoneCtx.zone.price, dp) : "—"}
+          sub={
+            zoneCtx
+              ? `${zoneCtx.zone.side === "short" ? "shorts above" : "longs below"} · ${fmtUsdVal(zoneCtx.zone.usd)} · ${zoneCtx.distPct >= 0 ? "+" : ""}${zoneCtx.distPct.toFixed(2)}% away`
+              : "no key zones in window"
+          }
+          tone={zoneCtx ? (zoneCtx.zone.side === "short" ? "down" : "up") : undefined}
+        />
+        <Stat
           label="Bars in window"
           value={String(currentBars.length)}
           sub={`${rows.length} signals listed · ${sets.map((s) => `${s.label} ${s.sigs.length}`).join(" · ")}`}
@@ -551,6 +726,58 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
         </div>
       )}
 
+      {/* ---- Zone-strike entries (operator setup) ---- */}
+      <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-300">
+            Zone-strike entries
+            <span className="ml-2 font-normal normal-case tracking-normal text-neutral-500">
+              price strikes a key liq zone + finished auction against it (top-3 rows zero/dominated) — Coinglass zone estimates
+            </span>
+          </div>
+          {zoneCtx && (
+            <span className={`font-mono text-[10px] ${zoneCtx.zone.side === "short" ? "text-red-400" : "text-emerald-400"}`}>
+              now: {zoneCtx.distPct >= 0 ? "+" : ""}{zoneCtx.distPct.toFixed(2)}% from {zoneCtx.zone.side === "short" ? "short" : "long"} zone {fmtPriceDec(zoneCtx.zone.price, dp)}
+            </span>
+          )}
+        </div>
+        {zoneStrikes.length ? (
+          <div className="mt-1.5 flex flex-col gap-1">
+            {zoneStrikes.map((s, i) => (
+              <button
+                key={`${s.ts}-${s.zone.price}-${i}`}
+                onClick={() => setJump({ ts: s.ts, key: `zs-${s.ts}-${s.zone.price}-${Date.now()}` })}
+                className={`flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded border px-2 py-1.5 text-left text-[11px] transition-colors hover:bg-neutral-800/50 ${
+                  s.dir === "short" ? "border-red-900/60 bg-red-950/25" : "border-emerald-900/60 bg-emerald-950/25"
+                }`}
+              >
+                <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${s.dir === "short" ? "bg-red-900/70 text-red-300" : "bg-emerald-900/70 text-emerald-300"}`}>
+                  {s.dir.toUpperCase()}
+                </span>
+                <span className="font-mono text-neutral-400">{fmtTs(s.ts, true)}</span>
+                <span className="text-neutral-500">
+                  struck {s.zone.side === "short" ? "shorts" : "longs"} zone
+                </span>
+                <span className="font-mono text-neutral-200">{fmtPriceDec(s.zone.price, dp)}</span>
+                <span className="text-neutral-500">
+                  ({fmtUsdVal(s.zone.usd)} · {s.zone.lev} lev · str {Math.round(s.zone.strength)})
+                </span>
+                <span className="ml-auto font-mono text-neutral-400">
+                  top3 buy {fmtQty(s.topBuy)} / sell {fmtQty(s.topSell)}
+                  {s.domRatio !== Infinity && ` · ${s.dominantSide === "sell" ? "sell" : "buy"} ${s.domRatio.toFixed(1)}×`}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-1 text-[11px] text-neutral-500">
+            No finished-auction strikes in the last 40 bars. Zones within ±4% are live on the chart as dashed lines (S/L tags); a
+            candidate appears when a bar trades through one and its top rows show the attack exhausted — sells ≈ 0 into a short
+            zone (short it), buys overwhelming into a long zone (long it).
+          </div>
+        )}
+      </div>
+
       {/* chart + right panel */}
       <div className="flex flex-col gap-3 xl:flex-row">
         <div className="h-[560px] min-w-0 flex-1 overflow-hidden rounded-lg border border-neutral-800 bg-[#0b0e11]">
@@ -563,9 +790,12 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
               showProfile={showProfile}
               resetKey={`${sym}-${bt}-${bt === "time" ? tf : btvMode === "auto" ? "auto" : btvMode}`}
               onHoverBar={setHoverBar}
+              onHoverCell={setHoverCell}
               signals={marks}
               jump={jump}
               activeSignalTs={activeSignal && (activeSignal.bt ?? bt) === bt ? activeSignal.ts : null}
+              rowSize={rowSizeSel === "auto" ? null : Number(rowSizeSel)}
+              zones={zoneLines}
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-neutral-500">
@@ -717,6 +947,31 @@ export default function FootprintTool({ sym = "BTC" }: { sym?: string }) {
           {/* ---- Bar details tab ---- */}
           {tab === "details" && (
             <div className="flex-1 overflow-y-auto">
+              {/* hovered display row (Coinglass crosshair tooltip) */}
+              {hoverCell?.row && (hoverCell.row.buy > 0 || hoverCell.row.sell > 0 || hoverCell.pctOfBar >= 0) && (
+                <div className="border-b border-neutral-800 bg-neutral-800/40 px-3 py-2 font-mono text-[10px] leading-relaxed text-neutral-300">
+                  <div className="text-neutral-400">
+                    Row {fmtPriceDec(hoverCell.row.pLo, dp)}–{fmtPriceDec(hoverCell.row.pHi, dp)} ·{" "}
+                    {Math.round(hoverCell.pctOfBar * 100)}% of bar volume
+                  </div>
+                  <div className="mt-0.5">
+                    <span className="text-emerald-400">buy {fmtQty(hoverCell.row.buy)}</span>
+                    {" · "}
+                    <span className="text-red-400">sell {fmtQty(hoverCell.row.sell)}</span>
+                    {" · "}
+                    <span className={hoverCell.row.buy - hoverCell.row.sell >= 0 ? "text-emerald-400" : "text-red-400"}>
+                      Δ {fmtQty(hoverCell.row.buy - hoverCell.row.sell)}
+                    </span>
+                    {" · "}
+                    <span className="text-neutral-500">
+                      {fmtCnt(hoverCell.row.buyCnt + hoverCell.row.sellCnt)} trades · avg{" "}
+                      {hoverCell.row.buyCnt + hoverCell.row.sellCnt
+                        ? fmtQty((hoverCell.row.buy + hoverCell.row.sell) / (hoverCell.row.buyCnt + hoverCell.row.sellCnt))
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+              )}
               {focusBar?.fp ? (
                 <>
                   <div className="border-b border-neutral-800 px-3 py-2 text-xs text-neutral-300">

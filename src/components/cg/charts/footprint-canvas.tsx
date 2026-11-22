@@ -22,9 +22,28 @@ interface Props {
   showProfile: boolean;
   resetKey: string; // changing this resets pan/zoom (e.g. bar-type switch)
   onHoverBar?: (bar: FpBar | null) => void;
+  onHoverCell?: (c: HoverCell | null) => void;
   signals?: SignalMark[]; // markers drawn on the chart
   jump?: { ts: number; key: string } | null; // center view on this bar when key changes
   activeSignalTs?: number | null; // highlight this signal's bar
+  rowSize?: number | null; // display row size (asset ladder). null = auto
+  zones?: ZoneLine[]; // key liq zones drawn on the price axis
+}
+
+export interface HoverCell {
+  bar: FpBar;
+  row: { pLo: number; pHi: number; buy: number; sell: number; buyCnt: number; sellCnt: number };
+  pctOfBar: number;
+  x: number;
+  y: number;
+  dir: 1 | -1 | 0; // 1 = cell right of the bar (bar details panel side), -1 = left
+}
+
+export interface ZoneLine {
+  price: number;
+  side: "above" | "below";
+  usd: number;
+  distPct: number;
 }
 
 interface AggRow {
@@ -34,6 +53,7 @@ interface AggRow {
   sell: number;
   buyCnt: number;
   sellCnt: number;
+  nativeRows: number[]; // native-tick row indexes inside this display row
 }
 
 const AXIS_W = 64;
@@ -50,9 +70,12 @@ export default function FootprintCanvas({
   showProfile,
   resetKey,
   onHoverBar,
+  onHoverCell,
   signals,
   jump,
   activeSignalTs,
+  rowSize: rowSizeProp = null,
+  zones = [],
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -227,21 +250,29 @@ export default function FootprintCanvas({
     const barW = plotW / count;
     const cellW = Math.max(4, barW - BAR_GAP);
 
-    // ----- aggregate price rows so text fits -----
+    // ----- display row grid: the Coinglass asset ladder -----
+    // Native tick from the visible bars (each bar's fp grid), then either the
+    // operator-set rowSize or the auto multiple that keeps rows ≥ MIN_ROW_H.
+    // The grid is anchored at 0 (price axis aligned to power-of-10 steps) so
+    // rows are STABLE across pans — Coinglass rows never slide.
     const priceRange = pHi - pLo;
-    // native tick from the visible bars
-    const bucketSize = (() => {
+    const nativeTick = (() => {
       for (let i = start; i < Math.min(merged.length, start + count); i++) {
         const fp = merged[i]?.fp;
         if (fp && fp.tick > 0) return fp.tick;
       }
       return 1;
     })();
-    const rawRows = priceRange / bucketSize;
-    const rowMult = Math.max(1, Math.ceil(rawRows / Math.max(1, Math.floor(plotH / MIN_ROW_H))));
-    const rowSize = bucketSize * rowMult;
-
-    const rowIndex = (p: number) => Math.floor((p - pLo) / rowSize);
+    let rowSize: number;
+    if (rowSizeProp && rowSizeProp > 0) {
+      rowSize = rowSizeProp; // operator ladder value (e.g. BTC 5, BNB 0.3)
+    } else {
+      const rawRows = priceRange / nativeTick;
+      const rowMult = Math.max(1, Math.ceil(rawRows / Math.max(1, Math.floor(plotH / MIN_ROW_H))));
+      rowSize = nativeTick * rowMult;
+    }
+    const rowAnchor = 0;
+    const rowIndex = (p: number) => Math.floor((p - rowAnchor) / rowSize);
 
     // pre-aggregate per visible bar (Fp rows → display rows)
     const agg = new Map<number, AggRow[]>();
@@ -261,7 +292,7 @@ export default function FootprintCanvas({
         const ri = rowIndex((rLo + rHi) / 2);
         let row = byRow.get(ri);
         if (!row) {
-          row = { pLo: pLo + ri * rowSize, pHi: pLo + (ri + 1) * rowSize, buy: 0, sell: 0, buyCnt: 0, sellCnt: 0 };
+          row = { pLo: rowAnchor + ri * rowSize, pHi: rowAnchor + (ri + 1) * rowSize, buy: 0, sell: 0, buyCnt: 0, sellCnt: 0, nativeRows: [] };
           byRow.set(ri, row);
           rows.push(row);
         }
@@ -270,6 +301,7 @@ export default function FootprintCanvas({
         row.sell += sell * usdMult;
         row.buyCnt += fp.bc[r];
         row.sellCnt += fp.sc[r];
+        row.nativeRows.push(r);
       }
       rows.sort((a, b) => b.pHi - a.pHi);
       agg.set(i, rows);
@@ -344,6 +376,19 @@ export default function FootprintCanvas({
       const cellTextW = cellW - 4;
       const bar = merged[i];
 
+      // bar volume + POC row (max total)
+      let barVol = 0;
+      let pocRow: AggRow | null = null;
+      let pocVol = -1;
+      for (const r of rows) {
+        const t = r.buy + r.sell;
+        barVol += t;
+        if (t > pocVol) {
+          pocVol = t;
+          pocRow = r;
+        }
+      }
+
       for (const r of rows) {
         const yTop = toPx(yScale, r.pHi);
         const yBot = toPx(yScale, r.pLo);
@@ -367,10 +412,10 @@ export default function FootprintCanvas({
           ctx.textBaseline = "middle";
           const sellTxt = modeText(r, "sell", mode);
           const buyTxt = modeText(r, "buy", mode);
-          ctx.fillStyle = "#ff8ba0";
+          ctx.fillStyle = total ? "#ff8ba0" : COLORS.text;
           ctx.textAlign = "left";
           ctx.fillText(sellTxt, x0 + 2, yTop + h / 2);
-          ctx.fillStyle = "#5fe3a8";
+          ctx.fillStyle = total ? "#5fe3a8" : COLORS.text;
           ctx.textAlign = "right";
           ctx.fillText(buyTxt, x0 + cellTextW - 2, yTop + h / 2);
         }
@@ -381,18 +426,15 @@ export default function FootprintCanvas({
           ctx.fillStyle = COLORS.green;
           ctx.fillRect(x0, yBot - 3, bw, 2.5);
           ctx.fillStyle = COLORS.red;
-          ctx.fillRect(x0 + bw, yBot - 3, cellTextW - bw, 2.5);
+          ctx.fillRect(x0 + bw, yBot - 3, cellTextW - bw, 2.2);
         }
 
         // diagonal imbalance highlight (native rows of this bar)
         const imb = diagImb.get(i);
         if (imb) {
-          const fp = bar.fp!;
           let buyHit = false;
           let sellHit = false;
-          for (let r2 = 0; r2 < fp.b.length; r2++) {
-            const mid = fp.lo + (r2 + 0.5) * fp.tick;
-            if (mid < r.pLo || mid >= r.pHi) continue;
+          for (const r2 of r.nativeRows) {
             if (imb.buy.has(r2)) buyHit = true;
             if (imb.sell.has(r2)) sellHit = true;
           }
@@ -408,8 +450,49 @@ export default function FootprintCanvas({
         }
       }
 
-      // candle skeleton (thin, left edge of the bar)
+      // ZERO ROWS — the finished-auction anatomy (Coinglass draws the full
+      // high→low ladder incl. zeros; we previously skipped empty rows, which
+      // hid the "zero at top" pattern the operator hunts). Rows covering the
+      // candle's high/low edges always render; interior gap rows render too
+      // when the display row is at least MIN_ROW_H tall.
       if (bar) {
+        const drawn = new Set(rows.map((r) => rowIndex((r.pLo + r.pHi) / 2)));
+        const topRi = rowIndex(bar.h);
+        const botRi = rowIndex(bar.l);
+        const zeroColor = "rgba(148,155,165,0.28)";
+        for (let ri = topRi; ri >= botRi; ri--) {
+          if (drawn.has(ri)) continue;
+          if (ri !== topRi && ri !== botRi && rowH < MIN_ROW_H * 0.8) continue; // interior gaps only when readable
+          const rLo = rowAnchor + ri * rowSize;
+          const rHi = rLo + rowSize;
+          const yTop = toPx(yScale, Math.min(rHi, bar.h));
+          const yBot = toPx(yScale, Math.max(rLo, bar.l));
+          const h = Math.max(2, yBot - yTop - 1);
+          ctx.fillStyle = zeroColor;
+          ctx.fillRect(x0, yTop, cellTextW, h);
+          if (h >= 9 && cellW >= 44) {
+            ctx.font = `${cellW >= 56 ? 9 : 8}px ui-monospace, monospace`;
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "rgba(148,155,165,0.55)";
+            ctx.textAlign = "left";
+            ctx.fillText("0", x0 + 2, yTop + h / 2);
+            ctx.textAlign = "right";
+            ctx.fillText("0", x0 + cellTextW - 2, yTop + h / 2);
+          }
+        }
+
+        // POC row — green ring around the bar's max-volume display row
+        // (>= 20px cells: the ring needs a couple of pixels of margin, the
+        // default ~26px-wide cells qualify, only deep history zoom skips it)
+        if (pocRow && cellW >= 20) {
+          const yTop = toPx(yScale, pocRow.pHi);
+          const yBot = toPx(yScale, pocRow.pLo);
+          ctx.strokeStyle = "#3dd68c";
+          ctx.lineWidth = 1.6;
+          ctx.strokeRect(x0 - 0.5, yTop - 0.5, cellW + 1, yBot - yTop + 1);
+        }
+
+        // candle skeleton (thin, left edge of the bar)
         const cx = x0 - 2;
         ctx.strokeStyle = bar.c >= bar.o ? COLORS.green : COLORS.red;
         ctx.lineWidth = 1;
@@ -418,6 +501,31 @@ export default function FootprintCanvas({
         ctx.lineTo(cx, toPx(yScale, bar.l));
         ctx.stroke();
       }
+    }
+
+    // ----- key liq zones (strike targets from the Liq Levels tab) -----
+    for (const z of zones) {
+      if (z.price <= pLo || z.price >= pHi) continue;
+      const y = toPx(yScale, z.price);
+      const short_ = z.side === "above";
+      ctx.strokeStyle = short_ ? "rgba(246,70,93,0.55)" : "rgba(14,203,129,0.55)";
+      ctx.setLineDash([6, 4]);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(plotL, y);
+      ctx.lineTo(plotR, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // zone tag on the left edge of the plot
+      const tag = `${short_ ? "S" : "L"} ${(z.usd / 1e6).toFixed(1)}M ${z.distPct > 0 ? "+" : ""}${z.distPct.toFixed(1)}%`;
+      ctx.font = "9px ui-monospace, monospace";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      const tw = ctx.measureText(tag).width + 6;
+      ctx.fillStyle = short_ ? "rgba(120,20,35,0.85)" : "rgba(10,70,45,0.85)";
+      ctx.fillRect(plotL + 2, y - 6, tw, 12);
+      ctx.fillStyle = short_ ? "#ff8ba0" : "#5fe3a8";
+      ctx.fillText(tag, plotL + 5, y + 0.5);
     }
 
     // ----- volume profile + POC + value area -----
@@ -464,15 +572,15 @@ export default function FootprintCanvas({
       // unreadable (profile bars painted over every label in the traded range)
       const profW = PROFILE_W - AXIS_W - 14;
       for (const [ri, v] of profByRow) {
-        const yTop = toPx(yScale, pLo + ri * rowSize + rowSize);
-        const yBot = toPx(yScale, pLo + ri * rowSize);
+        const yTop = toPx(yScale, rowAnchor + ri * rowSize + rowSize);
+        const yBot = toPx(yScale, rowAnchor + ri * rowSize);
         const h = Math.max(1.5, yBot - yTop - 1);
         const inVA = ri >= vaLoRi && ri <= vaHiRi;
         ctx.fillStyle = inVA ? "rgba(232,163,61,0.5)" : "rgba(139,148,158,0.35)";
         ctx.fillRect(profX0, yTop, (v / maxProf) * profW, h);
       }
       if (pocRi >= 0) {
-        const y = toPx(yScale, pLo + pocRi * rowSize + rowSize / 2);
+        const y = toPx(yScale, rowAnchor + pocRi * rowSize + rowSize / 2);
         ctx.strokeStyle = COLORS.accent;
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 3]);
@@ -489,7 +597,7 @@ export default function FootprintCanvas({
       ctx.font = "9px ui-monospace, monospace";
       ctx.textAlign = "left";
       if (vaHiRi > pocRi) {
-        const y = toPx(yScale, pLo + (vaHiRi + 1) * rowSize);
+        const y = toPx(yScale, rowAnchor + (vaHiRi + 1) * rowSize);
         ctx.strokeStyle = "rgba(232,163,61,0.55)";
         ctx.setLineDash([2, 3]);
         ctx.beginPath();
@@ -498,10 +606,10 @@ export default function FootprintCanvas({
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = "rgba(232,163,61,0.9)";
-        ctx.fillText(`VAH ${fmtPrice(pLo + (vaHiRi + 1) * rowSize)}`, profX0 + 2, y - 4);
+        ctx.fillText(`VAH ${fmtPrice(rowAnchor + (vaHiRi + 1) * rowSize)}`, profX0 + 2, y - 4);
       }
       if (vaLoRi < pocRi) {
-        const y = toPx(yScale, pLo + vaLoRi * rowSize);
+        const y = toPx(yScale, rowAnchor + vaLoRi * rowSize);
         ctx.strokeStyle = "rgba(232,163,61,0.55)";
         ctx.setLineDash([2, 3]);
         ctx.beginPath();
@@ -510,7 +618,7 @@ export default function FootprintCanvas({
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = "rgba(232,163,61,0.9)";
-        ctx.fillText(`VAL ${fmtPrice(pLo + vaLoRi * rowSize)}`, profX0 + 2, y + 10);
+        ctx.fillText(`VAL ${fmtPrice(rowAnchor + vaLoRi * rowSize)}`, profX0 + 2, y + 10);
       }
     }
 
@@ -593,7 +701,7 @@ export default function FootprintCanvas({
     ctx.strokeStyle = COLORS.axis;
     ctx.lineWidth = 1;
     ctx.strokeRect(plotL + 0.5, plotT + 0.5, plotW, plotH);
-  }, [size, view, merged, mode, unit, imbalanceRatio, showProfile, hover, lastPrice, signals, activeSignalTs]);
+  }, [size, view, merged, mode, unit, imbalanceRatio, showProfile, hover, lastPrice, signals, activeSignalTs, rowSizeProp, zones]);
 
   useEffect(() => {
     draw();
@@ -714,6 +822,78 @@ export default function FootprintCanvas({
     const b = merged[clamp(hover.bi, 0, merged.length - 1)];
     onHoverBar?.(b ?? null);
   }, [hover, merged, onHoverBar]);
+
+  // notify parent about the hovered display cell (bar + row) for the
+  // Bar-details panel — the price the pointer is on, like Coinglass's
+  // per-row crosshair tooltip
+  useEffect(() => {
+    if (!onHoverCell) return;
+    if (!hover || !merged.length || !view) {
+      onHoverCell(null);
+      return;
+    }
+    const bar = merged[clamp(hover.bi, 0, merged.length - 1)];
+    if (!bar?.fp) {
+      onHoverCell(null);
+      return;
+    }
+    // recompute the row grid exactly as draw() does
+    const plotR = size.w - (showProfile ? PROFILE_W + 10 : AXIS_W + 6);
+    const plotT = 8;
+    const plotB = size.h - TIME_H;
+    const priceRange = view.pHi - view.pLo;
+    const nativeTick = (() => {
+      for (let i = view.start; i < Math.min(merged.length, view.start + view.count); i++) {
+        const fp = merged[i]?.fp;
+        if (fp && fp.tick > 0) return fp.tick;
+      }
+      return 1;
+    })();
+    let rs: number;
+    if (rowSizeProp && rowSizeProp > 0) {
+      rs = rowSizeProp;
+    } else {
+      const rawRows = priceRange / nativeTick;
+      const rowMult = Math.max(1, Math.ceil(rawRows / Math.max(1, Math.floor((plotB - plotT) / MIN_ROW_H))));
+      rs = nativeTick * rowMult;
+    }
+    const yScale = makeScale(view.pHi, view.pLo, plotT, plotB);
+    const p = fromPx(yScale, hover.y);
+    const ri = Math.floor(p / rs);
+    const rLo = ri * rs;
+    const rHi = rLo + rs;
+    // aggregate the native rows inside this display row for this bar
+    const fp = bar.fp;
+    let buy = 0;
+    let sell = 0;
+    let buyCnt = 0;
+    let sellCnt = 0;
+    let barVol = 0;
+    let totalRows = 0;
+    for (let r = 0; r < fp.b.length; r++) {
+      const bv = fp.b[r];
+      const sv = fp.s[r];
+      barVol += bv + sv;
+      if (!(bv || sv)) continue;
+      totalRows++;
+      const nLo = fp.lo + r * fp.tick;
+      const nHi = nLo + fp.tick;
+      if ((nLo + nHi) / 2 < rLo || (nLo + nHi) / 2 >= rHi) continue;
+      const usdMult = unit === "usd" ? (nLo + nHi) / 2 : 1;
+      buy += bv * usdMult;
+      sell += sv * usdMult;
+      buyCnt += fp.bc[r];
+      sellCnt += fp.sc[r];
+    }
+    onHoverCell({
+      bar,
+      row: { pLo: rLo, pHi: rHi, buy, sell, buyCnt, sellCnt },
+      pctOfBar: barVol > 0 ? (buy + sell) / barVol : 0,
+      x: hover.x,
+      y: hover.y,
+      dir: hover.x > size.w / 2 ? -1 : 1,
+    });
+  }, [hover, merged, view, size, showProfile, unit, rowSizeProp, onHoverCell]);
 
   const onDoubleClick = useCallback(() => {
     setUserTouched(false); // reset = re-adopt the default behavior
