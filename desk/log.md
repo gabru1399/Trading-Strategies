@@ -19741,3 +19741,8 @@ analysis script rc=139
 - None — data missing, HOLD (manual check)
 - None — data missing, HOLD (manual check)
 
+
+## ROUND FAILED · 2026-11-22 14:03 UTC · zai-desk
+
+analysis script rc=1
+
