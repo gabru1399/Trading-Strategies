@@ -15,11 +15,12 @@
  */
 import { execFileSync } from "child_process";
 import fs from "fs";
+import os from "os";
 import path from "path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const ENV = path.join(ROOT, ".env");
-const TOKEN_FILE = "/tmp/cg_session_token.txt";
+const TOKEN_FILE = path.join(os.tmpdir(), "cg_session_token.txt");
 
 if (!process.env.CG_USER || !process.env.CG_PASS) {
   console.error("usage: CG_USER=you@example.com CG_PASS=... node scripts/cg-session.mjs");
