@@ -19728,3 +19728,16 @@ analysis script rc=139
 ### Housekeeping
 - Stale MT5 resting order MT5-XAU-20297864 (SELL_LIMIT 3741.5, +5% above market) flagged for §12 cancel/replace at next atg-exec wake
 - 5 symbols still no-data on liqlevels (ADA DOGE TRX ANTHROPIC VET) — coverage gap logged, not silently dropped
+## R822 · 2026-11-22 10:22 UTC · zai-desk
+
+**Market**: BTC 60,888.3 (+1.2%)  ETH 1,709.78 (+1.5%)  SOL 70.49 (+0.3%)  XAU 3,563.32 (-0.0%)  XAG 41.640 (+0.2%)
+**Bias (|score|≥2)**: XAU-3(TREND)
+
+### Opportunities (engine v3.2 (regime-aware: trend-pullback + mean-revert) — debate-gated + microFlow vote, min R 2)
+- none meeting the gates this round
+
+### Positions
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+- None — data missing, HOLD (manual check)
+
