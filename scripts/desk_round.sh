@@ -2,7 +2,7 @@
 # Trade-desk round orchestrator (zai-desk) — run every 15 minutes.
 #   1. git pull --rebase (best effort)
 #   2. ensure the terminal is up (boot `npm run dev` if needed, wait ≤150s)
-#   3. scripts/desk_round.py  (analysis + state.json + log.md) — python3 or python
+#   3. scripts/desk/desk_round.py  (analysis + state.json + log.md) — python3 or python
 #   4. commit + push desk/ changes (desk(round): ...)
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -51,7 +51,7 @@ fi
 PY="${DESK_PYTHON:-$(command -v python3 || command -v python || true)}"
 [ -z "$PY" ] && PY=python
 log "python resolved: $PY ($($PY --version 2>&1 || echo 'VERSION CHECK FAILED'))"
-"$PY" scripts/desk_round.py
+"$PY" scripts/desk/desk_round.py
 rc=$?
 if [ $rc -ne 0 ]; then
   log "analysis FAILED rc=$rc"

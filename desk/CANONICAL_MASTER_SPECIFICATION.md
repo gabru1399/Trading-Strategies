@@ -70,7 +70,7 @@ admission gateway are separate and cannot be supplied by a timer suffix.
 From the repository root, initialize the scheduler-supplied round:
 
 ~~~powershell
-python scripts/agent_wake_verification.py --round R<number>
+python scripts/archive/legacy-scripts/agent_wake_verification.py --round R<number>
 ~~~
 
 The command returns the title, preamble and Kernel and saves the first wake receipt with the original read-only bootstrap probes and file hashes. Repeating it returns the same receipt. Inspect each probe result separately; disk presence and usable runtime feeds are different checks.
@@ -78,11 +78,11 @@ The command returns the title, preamble and Kernel and saves the first wake rece
 Before evaluating each step, repeat the step command until its receipt reports an empty `remaining_anchors` array or `STEP_READY`. Each call returns one required document section in full and records it. The step command reads the hash from the saved receipt and refuses earlier gaps. Replace placeholders with actual identifiers.
 
 ~~~powershell
-python scripts/agent_wake_verification.py --round R<number> --step <n>
-python scripts/agent_wake_verification.py --round R<number> --status
+python scripts/archive/legacy-scripts/agent_wake_verification.py --round R<number> --step <n>
+python scripts/archive/legacy-scripts/agent_wake_verification.py --round R<number> --status
 ~~~
 
-Use `--step <n> --section <anchor>` to reread a section assigned to that step if tool output was clipped. Step 0 includes the launch prompt. Step 1 includes the evidence contract. The required reads through Step 5 cover the entire SOP from line 1 through the end marker, including Section 13, Sections 14–24, and Appendices A–G. Run `python scripts/agent_wake_verification.py --round R<number> --require-formulation-reads` before building or recommending a trade. The command fails if any source section is missing or any required Step 0–5 receipt is absent. It checks delivery, while the decision record must separately cite applicable rule IDs and the observed inputs. A failed prerequisite or pinned file change ends dependent work as `INCOMPLETE`. Preserve the original files and use a new round ID for a revised protocol. Report the actual round and error; never rewrite evidence, patch or restore the reader from an audit wake, or substitute an older round.
+Use `--step <n> --section <anchor>` to reread a section assigned to that step if tool output was clipped. Step 0 includes the launch prompt. Step 1 includes the evidence contract. The required reads through Step 5 cover the entire SOP from line 1 through the end marker, including Section 13, Sections 14–24, and Appendices A–G. Run `python scripts/archive/legacy-scripts/agent_wake_verification.py --round R<number> --require-formulation-reads` before building or recommending a trade. The command fails if any source section is missing or any required Step 0–5 receipt is absent. It checks delivery, while the decision record must separately cite applicable rule IDs and the observed inputs. A failed prerequisite or pinned file change ends dependent work as `INCOMPLETE`. Preserve the original files and use a new round ID for a revised protocol. Report the actual round and error; never rewrite evidence, patch or restore the reader from an audit wake, or substitute an older round.
 
 ### K-2 · Ordered state machine
 
@@ -128,7 +128,7 @@ Run the local validator before claiming completion. An issue forces INCOMPLETE. 
 
 ### K-5 · Implementation and reporting boundary
 
-The wake probe only reads. The existing `scripts/asset_360_forensic_engine.py --sym <symbol> --json` and telemetry dump are supplemental helpers. Some windows and sources are missing or estimated in those helpers. Inspect the underlying records; never reuse their generated scores, spread estimates or stop proposals as authoritative.
+The wake probe only reads. The existing `scripts/archive/legacy-scripts/asset_360_forensic_engine.py --sym <symbol> --json` and telemetry dump are supplemental helpers. Some windows and sources are missing or estimated in those helpers. Inspect the underlying records; never reuse their generated scores, spread estimates or stop proposals as authoritative.
 
 The signed compiler in `scripts/wal_engine/` is separate. Use its [Phase 2 runbook](../scripts/wal_engine/cg-terminal-phase2-runbook.md) with a running approved materializer, current manifest, scheduler request, pinned public key and gateway. Signing a round is insufficient for execution when gateway admission or a required data producer is missing. Use a valid signed report, the exact intended payload, and a fresh broker check. The reference policy must be checked for parity with K-4, including the A+ score and EV, before it may admit an action. When the compiler is unavailable, produce an audit-only dossier with its reason.
 
@@ -1308,7 +1308,7 @@ flowchart LR
 [PIT-07] [INVARIANT] [LIQUIDATION_MAGNET_GATE]: If LSR >= 2.5:1, passive front-running is STRICTLY BANNED; wait for cascade exhaustion and S1 sweep wick before entering.
 [PIT-08] [INVARIANT] [POST_ONLY_MAKER]: Delta limit entries require `post_only: true`. MT5 uses broker passive limits. Validate fees and admission with P5-03.
 [PIT-09] [INVARIANT] [AUTO_BREAKEVEN_RATCHET]: Upon reaching >= +1.0R favorable excursion, on-exchange stop loss order MUST immediately be edited via `edit_order` to Entry Price + commission buffer.
-[PIT-10] [INVARIANT] [DEV_SERVER_CONCURRENCY]: All automated screening scripts (`scripts/individual_asset_evaluator.py`) MUST use bounded concurrency (`max_workers=4`) with gentle inter-call pacing.
+[PIT-10] [INVARIANT] [DEV_SERVER_CONCURRENCY]: All automated screening scripts (`scripts/trading/individual_asset_evaluator.py`) MUST use bounded concurrency (`max_workers=4`) with gentle inter-call pacing.
 [PIT-11] [INVARIANT] [ACTIVE_CASCADE_CLIMAX]: If `Liq 5m > $500k`, limit orders into cascade are BANNED; wait for discrete exhaustion signal (Footprint Absorption or Exhaustion candle).
 [PIT-12] [INVARIANT] [MANDATORY_SPEC_READING]: Antigravity MUST execute `read_file` on `desk/CANONICAL_MASTER_SPECIFICATION.md` on EVERY turn/wake-up; zero trade formulation authorized without actively reading the spec.
 [PIT-13] [INVARIANT] [UNIVERSE_SCOPE_COVERAGE]: Freeze the exact live symbol inventories and source mappings under K-3. The curated registry is a mapping input.
@@ -1623,7 +1623,7 @@ Historical reconciliation record from 2.1.0-s1. Kernel K-0 and K-4 govern active
 | `/api/cg/liq-live` | LIQ-LIVE-01, D16. Check stream health and coverage before summing. |
 
 ### B.3 Physical path registry
-Scripts: `scripts/agent_wake_verification.py`, `scripts/round_preflight_bootstrap.py`, `scripts/fetch_full_asset_telemetry.py`, `scripts/individual_asset_evaluator.py`, `scripts/desk_daemon.mjs`, `scripts/desk_round.sh`, `scripts/mt5_cg_trader.py`.
+Scripts: `scripts/archive/legacy-scripts/agent_wake_verification.py`, `scripts/round_preflight_bootstrap.py`, `scripts/data-pipeline/fetch_full_asset_telemetry.py`, `scripts/trading/individual_asset_evaluator.py`, `scripts/desk_daemon.mjs`, `scripts/desk_round.sh`, `scripts/mt5_cg_trader.py`.
 Desk files: `desk/CANONICAL_MASTER_SPECIFICATION.md`, `desk/state.json`, `desk/log.md`, `desk/inbox/WAKE.md`, `desk/outbox/<basename>.reply.md`, `desk/deepscan/`, `data/mcp-cursor.json`.
 Config/data: `C:\Users\SIGMA\.gemini\config\rules\GEMINI.md`, `GEMINI.md` (relative to the CG-Terminal workspace), `src/lib/universe/curated.ts`, `docs/DATA_POINT_INVENTORY.md`.
 Delta MCP calls named in the spec: `get_wallet_balances`, `get_margined_positions`, `get_open_orders`, `get_ticker`, `get_product`, `edit_order`, `cancel_order` (DMR-01).

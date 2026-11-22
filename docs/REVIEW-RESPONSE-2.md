@@ -20,7 +20,7 @@
 **CANNOT be done from the sandbox — USER ACTIONS REQUIRED (in order):**
 1. **Make the repo private** (GitHub → Settings → General → Danger Zone → Change visibility). This is the single switch that stops the live bleed.
 2. **Rotate credentials**: the Coinglass handshake constants in `cg_token.py` (AES key `1f68e…`, TOTP secret) are burned — if Coinglass rotates them this repo breaks until re-probed, but nothing of yours is compromised beyond access to their public-ish data. More important: rotate **any** Binance testnet keys, broker passwords, or API tokens that ever touched a commit.
-3. **Purge history** (`desk/mt5.json`, `positioning.json`, `alerts*.json`, `scripts/*.json`, `scripts/t3_probe_results.json`, and the login string) with `git filter-repo` or BFG, then force-push — **after** going private, and coordinated with the desk daemon (it must re-clone). The full history has ~2,359 commits touching `desk/mt5.json`.
+3. **Purge history** (`desk/mt5.json`, `positioning.json`, `alerts*.json`, `scripts/*.json`, `scripts/ops/t3_probe_results.json`, and the login string) with `git filter-repo` or BFG, then force-push — **after** going private, and coordinated with the desk daemon (it must re-clone). The full history has ~2,359 commits touching `desk/mt5.json`.
 4. After the purge, re-verify with an anonymous clone that `desk/mt5.json` is gone from history.
 5. Consider a **desk-data split**: a second private repo (or local-only sync) for `desk/` runtime state, keeping the public repo for code only. The daemon's `pushDesk` path would need a second remote — we can implement on request.
 

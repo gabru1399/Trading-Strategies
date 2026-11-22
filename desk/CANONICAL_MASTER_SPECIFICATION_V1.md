@@ -88,7 +88,7 @@ AUTONOMOUS DUAL-VENUE TRADE EXECUTION & RECURSIVE SELF-IMPROVING ENGINE
 [BOOT-05] [INVARIANT] [DETERMINISTIC_PREFLIGHT_BOOTSTRAP]: Verbal recitation of dependency names without physical runtime tool execution is STRICTLY FORBIDDEN. On EVERY activation, round, or timer expiration, the agent MUST execute the following as the MANDATORY FIRST tool call — no exceptions:
 
   ```
-  run_command("python c:/Users/SIGMA/Documents/cg-terminal/scripts/agent_wake_verification.py --round <N>")
+  run_command("python c:/Users/SIGMA/Documents/cg-terminal/scripts/archive/legacy-scripts/agent_wake_verification.py --round <N>")
   ```
 
   This single atomic call simultaneously:
@@ -140,7 +140,7 @@ AUTONOMOUS DUAL-VENUE TRADE EXECUTION & RECURSIVE SELF-IMPROVING ENGINE
 
 ## SECTION 2. THE MANDATORY PRE-FLIGHT VERIFICATION CHECKLIST & 10 PRE-FLIGHT GATES
 
-[PRE-01] [MANDATORY] [HEADER_PROTOCOL]: On EVERY wake-up, autonomous recursion round, or trading response, the execution MUST OPEN with the completed Pre-Flight Verification Checklist header confirming fresh, uncompressed analysis backed by empirical execution of `python c:/Users/SIGMA/Documents/cg-terminal/scripts/agent_wake_verification.py --round <N>` (which internally runs `round_preflight_bootstrap.py` AND reads spec lines 1-165):
+[PRE-01] [MANDATORY] [HEADER_PROTOCOL]: On EVERY wake-up, autonomous recursion round, or trading response, the execution MUST OPEN with the completed Pre-Flight Verification Checklist header confirming fresh, uncompressed analysis backed by empirical execution of `python c:/Users/SIGMA/Documents/cg-terminal/scripts/archive/legacy-scripts/agent_wake_verification.py --round <N>` (which internally runs `round_preflight_bootstrap.py` AND reads spec lines 1-165):
 
 ```text
 ### ✅ PRE-FLIGHT VERIFICATION CHECKLIST (ROUND R<n>)
@@ -171,8 +171,8 @@ AUTONOMOUS DUAL-VENUE TRADE EXECUTION & RECURSIVE SELF-IMPROVING ENGINE
 
 ### Pre-Flight Verification Gates (C-01 to C-10)
 
-[C-01] [GATE] [SPEC_GROUNDING]: `CANONICAL_MASTER_SPECIFICATION.md` is bound as sole operational manual. Agent MUST call `python c:/Users/SIGMA/Documents/cg-terminal/scripts/agent_wake_verification.py` as the FIRST tool call on every wake-up — this reads spec lines 1-165 AND runs the bootstrap in one atomic call. Never rely on cached prompt text as a substitute for `read_file`.
-[C-02] [GATE] [INFRASTRUCTURE_VERIFICATION]: Active physical presence of all required plugins, skills, MT5 IPC, and MCP servers MUST be verified via `python c:/Users/SIGMA/Documents/cg-terminal/scripts/agent_wake_verification.py` before formulation. Zero cosmetic claims permitted — script must exit code 0.
+[C-01] [GATE] [SPEC_GROUNDING]: `CANONICAL_MASTER_SPECIFICATION.md` is bound as sole operational manual. Agent MUST call `python c:/Users/SIGMA/Documents/cg-terminal/scripts/archive/legacy-scripts/agent_wake_verification.py` as the FIRST tool call on every wake-up — this reads spec lines 1-165 AND runs the bootstrap in one atomic call. Never rely on cached prompt text as a substitute for `read_file`.
+[C-02] [GATE] [INFRASTRUCTURE_VERIFICATION]: Active physical presence of all required plugins, skills, MT5 IPC, and MCP servers MUST be verified via `python c:/Users/SIGMA/Documents/cg-terminal/scripts/archive/legacy-scripts/agent_wake_verification.py` before formulation. Zero cosmetic claims permitted — script must exit code 0.
 [C-03] [GATE] [COGNITIVE_DEBATE]: No trade or code is generated without Socratic stress-testing across the 10 mental models and 4-voice desk debate.
 [C-04] [GATE] [INDIVIDUAL_ASSET_AUDIT]: Pre-aggregated screener tables (`/api/cg/screener`) are STRICTLY PURGED; execute direct endpoint-by-endpoint queries across all 10 modules for each and every candidate across the 234 Delta and 156 MT5 assets.
 [C-05] [GATE] [CLOB_RECONCILIATION]: Query live `get_wallet_balances`, `get_margined_positions`, and `get_open_orders` on Delta Exchange India (`india_prod`, Account `#26902927`).
@@ -981,7 +981,7 @@ flowchart LR
 [PIT-07] [INVARIANT] [LIQUIDATION_MAGNET_GATE]: If LSR >= 2.5:1, passive front-running is STRICTLY BANNED; wait for cascade exhaustion and S1 sweep wick before entering.
 [PIT-08] [INVARIANT] [POST_ONLY_MAKER]: All limit entries MUST strictly specify `post_only: true`; zero taker fees on entries.
 [PIT-09] [INVARIANT] [AUTO_BREAKEVEN_RATCHET]: Upon reaching >= +1.0R favorable excursion, on-exchange stop loss order MUST immediately be edited via `edit_order` to Entry Price + commission buffer.
-[PIT-10] [INVARIANT] [DEV_SERVER_CONCURRENCY]: All automated screening scripts (`scripts/individual_asset_evaluator.py`) MUST use bounded concurrency (`max_workers=4`) with gentle inter-call pacing.
+[PIT-10] [INVARIANT] [DEV_SERVER_CONCURRENCY]: All automated screening scripts (`scripts/trading/individual_asset_evaluator.py`) MUST use bounded concurrency (`max_workers=4`) with gentle inter-call pacing.
 [PIT-11] [INVARIANT] [ACTIVE_CASCADE_CLIMAX]: If `Liq 5m > $500k`, limit orders into cascade are BANNED; wait for discrete exhaustion signal (Footprint Absorption or Exhaustion candle).
 [PIT-12] [INVARIANT] [MANDATORY_SPEC_READING]: Antigravity MUST execute `read_file` on `desk/CANONICAL_MASTER_SPECIFICATION.md` on EVERY turn/wake-up; zero trade formulation authorized without actively reading the spec.
 [PIT-13] [INVARIANT] [UNIVERSE_SCOPE_COVERAGE]: Individual asset audits MUST dynamically query complete live universe from `src/lib/universe/curated.ts` (all 234 mutual assets: 30 Crypto + 28 TradFi + 173 Mutual + 3 Classic).

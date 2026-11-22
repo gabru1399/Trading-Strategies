@@ -27,6 +27,69 @@ respected under all conditions.
 
 ---
 
+## 0. Repository layout (2026-11-22 restructure)
+
+```
+.
+├── src/                        # the terminal (Next.js App Router)
+│   ├── app/                    #   pages + /api/cg/* routes (all upstream calls)
+│   ├── components/cg/          #   tools: Overview · Footprint · Large Orders ·
+│   │                           #   Liq Levels · Book Walls · CVD · Binance tier
+│   ├── lib/cg/                 #   Coinglass client, signal engine, asset registry
+│   ├── lib/live/               #   WS/REST real-time lanes + shared breaker
+│   ├── lib/binance/            #   top-200 universe + SIGNED testnet client
+│   └── lib/universe/curated.ts #   canonical 61-asset registry
+├── mcp/server.mjs              # MCP server: terminal data → Antigravity
+├── desk/                       # trade desk: canonical spec, wake inbox, state
+├── scripts/                    # operational + research tooling
+│   ├── trading/                #   key_level_auction_tracker.py (5m entries),
+│   │                           #   MT5 executor chain, punch engine
+│   ├── desk/ (rounds/ audit/)  #   round drivers, evidence builders, audits
+│   ├── scanner/ analysis/      #   universe scanners, one-shot analyses
+│   ├── research/               #   Coinglass reverse-engineering probes + notes
+│   ├── data-pipeline/ ops/     #   backfills, maintenance
+│   └── archive/legacy-scripts/ #   historical one-offs (kept for provenance)
+├── docs/
+│   ├── guides/                 #   install, local, antigravity, protocol guides
+│   ├── reports/ research/      #   audit + session reports, business research
+├── HFT/  Delta-Fibonacci-Institutional-Business/   # sibling engines
+└── scripts/MANIFEST.md         # old→new path map for every moved script
+```
+
+Live entry points (invoked by path from package.json / mcp / desk / src)
+stay at `scripts/` top level; everything historical moved into the taxonomy
+above with every reference rewritten repo-wide.
+
+## 0b. Zone-strike entries (the footprint edge)
+
+The Footprint tab renders proper Coinglass candles: per-asset **row size**
+(BTC 5 · ETH 0.5 · BNB 0.3 · XAU 0.3…), zero rows across the full high→low
+ladder (the finished-auction anatomy), per-bar POC ring, and the **key
+liquidation zones** overlaid as dashed S/L lines.
+
+**The setup**: enter when price *strikes* one of the key liq zones from the
+Liquidation Levels tab **and** the 5m footprint prints a *finished auction*
+against the strike — top rows zero/dominated:
+
+- **SHORT** — rally into a key short zone, top-3 rows show sells ≈ 0 or
+  sell ≥ 3× buy → the auction finished, fade it.
+- **LONG** — decline into a key long zone, top-3 rows show buy ≥ 3× sell →
+  the decline died, buy it.
+
+Same logic in three places: the **Zone-strike entries** panel on the
+Footprint tab (click a candidate to jump the chart to the striking bar),
+the CLI scanner, and the agent-side MCP tools.
+
+```bash
+python3 scripts/trading/key_level_auction_tracker.py --sym BTC --once
+python3 scripts/trading/key_level_auction_tracker.py --sym BTC --watch   # JSON lines
+python3 scripts/trading/key_level_auction_tracker.py --scan 30           # curated sweep
+python3 scripts/trading/key_level_auction_tracker.py --self-test
+```
+
+Zone figures are Coinglass estimates; the scanner never fabricates a
+signal — no finished auction, no entry.
+
 ## 1. What you get
 
 | Tab | Content |

@@ -1,7 +1,7 @@
 /**
  * Perp-map — verified derivatives coverage for classic (Tier-3) instruments.
  *
- * LIVE-VERIFIED 2026-11-11 (scripts/probe_cg_venue_keys.py +
+ * LIVE-VERIFIED 2026-11-11 (scripts/research/probes/probe_cg_venue_keys.py +
  * probe_cg_engine_surface.py + CFTC/CNBC probes; user screenshot discovery:
  * coinglass.com lists index perps — tradeXYZ SP500-USD $463M vol):
  *   - Coinglass carries REAL perp markets for SP500 / JP225 / WTI(CL) /

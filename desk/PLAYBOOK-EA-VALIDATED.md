@@ -3,7 +3,7 @@
 **Status: VALIDATED · 2026-11-18 · zai-desk**
 **Data: real Binance USDT-M futures 15m klines, 2026-05-01 → 2026-11-17 (201 days, 57,819 bars × BTC/ETH/SOL)**
 **Engine: conservative fills (stop-first worst case), maker 0.02% / taker 0.05% / stop slippage 0.02% — ALL stats NET of costs.**
-**Scripts: scripts/backtest_ea.py, scripts/diag_ea.py, scripts/charts_ea.py · Results: data/backtest/results.json, trades.csv**
+**Scripts: scripts/backtest_ea.py, scripts/archive/legacy-scripts/diag_ea.py, scripts/archive/legacy-scripts/charts_ea.py · Results: data/backtest/results.json, trades.csv**
 
 ---
 

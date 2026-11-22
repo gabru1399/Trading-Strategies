@@ -186,7 +186,7 @@ export function leadInstr(sym: string): string {
  * against the real /api/orderFlow + /api/v2/kline endpoints). */
 /** Per-venue instrument KEY FORMS for 1000-multiple assets (live-verified
  *  2026-11-12 against Coinglass /api/orderFlow + /api/v2/kline — see
- *  scripts/probe-fp-1000x.ts raw output):
+ *  scripts/research/probes/probe-fp-1000x.ts raw output):
  *    OKX         lists the PLAIN base          SHIB-USDT-SWAP / PEPE-USDT-SWAP
  *    Bybit       PEPE keeps the 1000-prefix    1000PEPEUSDT, but SHIB renames
  *                to the suffix form           SHIB1000USDT
@@ -199,7 +199,7 @@ const FP_KEY_FORMS: Record<string, { okx?: string; bybit?: string; hl?: string }
 };
 
 /** Venue EXCLUSIONS for symbols with genuinely dead keys (live-verified
- *  40001, scripts/probe-fp-1000x.ts + probe-fp-1000x-liq.ts):
+ *  40001, scripts/research/probes/probe-fp-1000x.ts + probe-fp-1000x-liq.ts):
  *  XMR has no OKX USDT-SWAP; VET has no OKX swap, no Hyperliquid market and
  *  no Bitget liq-levels (Binance+Bybit only). Constructing dead keys only
  *  burns upstream 40001s on every load — drop them (the aggregate stays
@@ -209,7 +209,7 @@ const NO_HL_MARKET = new Set(["VET"]);
 const NO_BITGET_LIQ = new Set(["VET", "1000SHIB", "1000PEPE"]);
 
 /** liquidationLevels/v2 key forms + dead legs (live-verified 2026-11-12,
- *  scripts/probe-fp-1000x-liq.ts): the endpoint's venue coverage differs from
+ *  scripts/research/probes/probe-fp-1000x-liq.ts): the endpoint's venue coverage differs from
  *  orderFlow — kPEPE orderFlow works but kPEPE liq-levels 40001s
  *  ("price/OI row unavailable"), Bitget carries no SHIB/PEPE levels at all. */
 const LIQ_KEY_FORMS: Record<string, { okx?: string; bybit?: string; hl?: string; dropHl?: boolean }> = {

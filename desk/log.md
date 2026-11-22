@@ -794,12 +794,12 @@ Deliverables: EXPANSION-PLAN-20261110.md (v1.1) · REVIEW-MULTIAGENT-20261110.md
 
 ### RETRACTION · 2026-11-10 21:30 UTC · zai-desk — false "feed dead" readings in the 20:53/20:54 run set (state.json race)
 
-During the 20:53-20:54 UTC full-universe runs, desk/state.json contained stash-pop conflict markers (2nd daemon/desk write-race occurrence; root cause: autoStash pop conflict during `git pull --rebase`). The deepscan's legacy silent fallback scanned with an EMPTY symbol_map, producing FALSE "feed dead (no tick — DIR-0003)" §7/§9 broker readings for DOGE and LINK (their true state: DOGUSD basis +0.015%/spread 1.328% → BLOCKED-on-spread; LNKUSD basis +0.131%/spread 0.550% → BLOCKED-on-spread). Affected artifacts: DOGE-20261110-2053/2054.md, LINK-20261110-2053/2054.md, DIGEST-20261110-2053/2054.md + their broadcasts. **Superseded by** the clean 20:57 re-run (DOGUSD/LNKUSD correct readings) and the 21:07-21:08 runs. History NOT rewritten (append-only audit trail). Hardening shipped: state.json parse-guards (unreadable OR <17 map entries → run refuses), repair script scripts/repair_state_json.py committed as runbook, daemon-side atomic-write + no-marker-commit tasked in DIR-0009 task 7.
+During the 20:53-20:54 UTC full-universe runs, desk/state.json contained stash-pop conflict markers (2nd daemon/desk write-race occurrence; root cause: autoStash pop conflict during `git pull --rebase`). The deepscan's legacy silent fallback scanned with an EMPTY symbol_map, producing FALSE "feed dead (no tick — DIR-0003)" §7/§9 broker readings for DOGE and LINK (their true state: DOGUSD basis +0.015%/spread 1.328% → BLOCKED-on-spread; LNKUSD basis +0.131%/spread 0.550% → BLOCKED-on-spread). Affected artifacts: DOGE-20261110-2053/2054.md, LINK-20261110-2053/2054.md, DIGEST-20261110-2053/2054.md + their broadcasts. **Superseded by** the clean 20:57 re-run (DOGUSD/LNKUSD correct readings) and the 21:07-21:08 runs. History NOT rewritten (append-only audit trail). Hardening shipped: state.json parse-guards (unreadable OR <17 map entries → run refuses), repair script scripts/ops/repair_state_json.py committed as runbook, daemon-side atomic-write + no-marker-commit tasked in DIR-0009 task 7.
 
 ### DIALOG · 2026-11-10 21:32 UTC · zai-desk — FULL-UNIVERSE EXPANSION EXECUTED (user directive 2026-11-11 IST: "expand all the mentioned forex, indices and metals along with mentioned cryptos… extensive research of all market data available from all exchange and integration in our terminal")
 
 User overrode the v1.1 Tier-3 deferral. Executed:
-1. RESEARCH (live probes, scripts/t3_probe_results.json + web): terminal capability matrix (19/20 routes verified, unknown-sym rejection on all gated routes) · Yahoo chart v8 143/143 probes OK across ALL classes (volume on equities/US cash indices/CME futures; FX+EU/Asia cash price-only; 1m→1y depth) · Binance 418 auto-ban lesson · Stooq unreachable · FundedNext official instrument lists (46 FX headline, 43 verifiable; 20 equities incl 6 EUR; 13 indices + VIX per user audit). Compendium: desk/deepscan/T3-DATARESEARCH-20261110.md.
+1. RESEARCH (live probes, scripts/ops/t3_probe_results.json + web): terminal capability matrix (19/20 routes verified, unknown-sym rejection on all gated routes) · Yahoo chart v8 143/143 probes OK across ALL classes (volume on equities/US cash indices/CME futures; FX+EU/Asia cash price-only; 1m→1y depth) · Binance 418 auto-ban lesson · Stooq unreachable · FundedNext official instrument lists (46 FX headline, 43 verifiable; 20 equities incl 6 EUR; 13 indices + VIX per user audit). Compendium: desk/deepscan/T3-DATARESEARCH-20261110.md.
 2. T2b SHIPPED: XPT (Binance+OKX) + USO (OKX-lead — first non-Binance lead; leadInstr() centralization across 8 total sites incl. UI large-orders + live server-price per review G2) + USO ticker m15 fallback + aggVenues honest-400.
 3. T3 SHIPPED: src/lib/cg/classic.ts (77 instruments — SPCX EXCLUDED as wrong Yahoo instrument per review E4) + /api/cg/classic route (registry-gated Yahoo proxy, 60s cache, query2 fallback, 429 no-fallthrough, cache eviction+cap) + deepscan classic_report() (§1 quote/session, honest n/a §2-§6 with per-class analog research, §7 broker, reduced 4-dim §8 scorecard, §9 manifest) + full dispatch/digest/broadcast integration. `360 all` = 16 perp + 77 classic.
 4. v3.3 GATES (multi-agent round 2, all verified live): data-depth (≥3 fp venues AND ≥1,000 open levels) · magnet-mass floor T1 ≥ max[$5M, 0.25% OI] (XLM 3.19R PLACEABLE → PARKED on $0.9M T1 — closes yesterday's Q1/Q2 blocker) · min-lot risk → PARKED (XAG 0.72%) · floor-to-step sizing · chg-24h honest labels · staleness gate (15/77 STALE at 21:08, EU closed — honest) · registry/parse hard-fails (state.json race + terminal-down refuse-to-scan).
@@ -10023,7 +10023,7 @@ analysis script rc=1
 - Action:
   1. Formally codified Section 1.3 in desk/CANONICAL_MASTER_SPECIFICATION.md and updated .gemini/rules/SWARM_EXECUTION.md.
   2. Mandated that EVERY round and response opens with the standardized Pre-Flight Verification Checklist header.
-  3. Enforced that each of the 61 Curated Assets must be analyzed fresh from scratch via live direct API ingestion (scripts/parse_screener_clean.py), with zero reliance on cached subagent summaries.
+  3. Enforced that each of the 61 Curated Assets must be analyzed fresh from scratch via live direct API ingestion (scripts/ops/parse_screener_clean.py), with zero reliance on cached subagent summaries.
 
 
 ## R331 · 2026-11-16 13:20 UTC · atg-exec & zai-desk
@@ -10162,7 +10162,7 @@ analysis script rc=1
        - Zero candidate limit orders standing; open order count on CLOB strictly represents native bracket protection (4 orders).
 
 - **PHASE 1: 61-ASSET UNIVERSE SCREENING & TAB 7 REGIME ROUTING**:
-    * Full 61 Curated Assets screened fresh from scratch via scripts/parse_screener_clean.py.
+    * Full 61 Curated Assets screened fresh from scratch via scripts/ops/parse_screener_clean.py.
     * All 30 Crypto + 28 TradFi + 3 Classic scanned. Crypto continues in downward rotational pullback; equity proxy strength in MSTR/GOOGL.
 
 - **PHASE 7: DYNAMIC TIMER RE-ARM**:
@@ -10239,7 +10239,7 @@ analysis script rc=1
     * Active Running Positions: **0 / 2** (100% capital preserved).
 
 - **PHASE 1: 61-ASSET UNIVERSE SCREENING & TAB 7 REGIME ROUTING**:
-    * All 61 Curated Assets screened fresh from scratch via scripts/parse_screener_clean.py.
+    * All 61 Curated Assets screened fresh from scratch via scripts/ops/parse_screener_clean.py.
     * **Market Regime Shift**: Post-short squeeze volatility expansion.
       - BTC surged to ,845 (day high ,679) on 4.04x RVOL.
       - Nearly the entire crypto perp complex (BTC, ETH, BNB, SOL, XRP, ADA, DOGE, LINK, LTC, AVAX, DOT, NEAR, UNI, ATOM, ETC, FIL, APT, ARB, OP, SUI, INJ, TIA, VET) has shifted into WATCH_EXHAUSTION (B).
@@ -10343,7 +10343,7 @@ analysis script rc=1
 ## R337 · 2026-11-16 16:05 UTC · atg-exec
 - **PRE-FLIGHT VERIFICATION CHECKLIST (ROUND R337)**:
     * Pre-Flight Verification Checklist COMPLETED in full.
-    * Fresh analysis of each of the 61 Curated Assets executed from scratch via `scripts/individual_asset_evaluator.py` (Zero cached echoes).
+    * Fresh analysis of each of the 61 Curated Assets executed from scratch via `scripts/trading/individual_asset_evaluator.py` (Zero cached echoes).
     * Single Dynamic 1200s Timer verified (Zero duplicate timers, zero cron).
     * Live Delta Exchange India CLOB & Margin Solvency audited (Account #26902927).
     * Concurrency Circuit (P5-06) & Risk Gates (Gate 1–11) armed.
@@ -10356,7 +10356,7 @@ analysis script rc=1
     * Active Running Positions: **0 / 2** (100% capital preserved).
 
 - **PHASE 1: 61-ASSET UNIVERSE SCREENING & INDIVIDUAL ENDPOINT AUDIT**:
-    * All 61 Curated Assets audited fresh, individually, and endpoint-by-endpoint via `scripts/individual_asset_evaluator.py`. Zero pre-aggregated scanner shortcuts.
+    * All 61 Curated Assets audited fresh, individually, and endpoint-by-endpoint via `scripts/trading/individual_asset_evaluator.py`. Zero pre-aggregated scanner shortcuts.
     * BTC ($64,523.20) consolidating in TREND_DOWN with no confirmed absorption wicks.
     * Altcoins remain in consolidation / exhaustion regimes post-squeeze.
     * 0 assets meet minimum Table 7 confluence threshold (score >= 5.0 pts) and positive EV hurdle (EV >= 1.50R).
@@ -11481,7 +11481,7 @@ analysis script rc=1
 3. **ADAUSD SHORT (Order ID `1688520363`)**: Sell 25 @ `$0.1555` | SL: `$0.1572` | TP: `$0.1499` (+3.29R).
 
 ### Round R425 Fresh 61-Asset Screening Summary
-- Audited all 61 Curated Assets from scratch via `scripts/individual_asset_evaluator.py`.
+- Audited all 61 Curated Assets from scratch via `scripts/trading/individual_asset_evaluator.py`.
 - 6 qualifying setups identified meeting Table 7: BTC (2.60R, 86.9%), BNB (4.13R, 84.0%), ATOM (3.96R, 81.8%), XLM (2.36R, 89.7% — active), FIL (2.56R, 80.4%), TIA (2.78R, 87.7%).
 ## R426 · 2026-11-17 10:19 UTC · zai-desk
 
@@ -11611,7 +11611,7 @@ analysis script rc=1
 
 
 ## EXEC · 2026-11-17 11:50 UTC · atg-exec
-- **ROUND R428/R429 RECURSION COMPLETE**: 61 Curated Assets audited endpoint-by-endpoint via scripts/individual_asset_evaluator.py.
+- **ROUND R428/R429 RECURSION COMPLETE**: 61 Curated Assets audited endpoint-by-endpoint via scripts/trading/individual_asset_evaluator.py.
 - **BTCUSD SHORT FILLED**: Order ID 1689324832 executed 1 contract (0.001 BTC @ ,550.0).
   - Isolated Margin: .291 USD (50x leverage). Liquidation Price: ,679.625.
   - Active On-Exchange Brackets: Stop Loss Order ID 1689324836 @ ,950.0 (.40 risk); Take Profit Order ID 1689324838 @ ,550.0 (+2.50R / +.00 reward).
@@ -14102,13 +14102,13 @@ analysis script rc=1
 - **Roadmap**: P0 (SMC columns + feature audit + EA-1) / P1 (hftbacktest fill-rate validation of EA-1/2/5; pennying adjust; basis prototype) / P2 (qlib LR harness, ABIDES stress, execution schedulers). Governance: repo-derived features enter LR overlay like paper signals; data-honesty rules unchanged.
 
 ## R546 · 2026-11-18 18:40 UTC · zai-desk
-- **END-TO-END: EA archetypes backtested on real data → validated playbook shipped.** Real Binance USDT-M 15m klines (data.binance.vision, 69 archives, 57,819 bars × BTC/ETH/SOL, 2026-05-01→11-17); engine scripts/backtest_ea.py (no-lookahead, stop-first worst-case fills, fees+slip net, spec BE/time-stop/40-40-20 invariants; diagnostics scripts/diag_ea.py; charts scripts/charts_ea.py).
+- **END-TO-END: EA archetypes backtested on real data → validated playbook shipped.** Real Binance USDT-M 15m klines (data.binance.vision, 69 archives, 57,819 bars × BTC/ETH/SOL, 2026-05-01→11-17); engine scripts/backtest_ea.py (no-lookahead, stop-first worst-case fills, fees+slip net, spec BE/time-stop/40-40-20 invariants; diagnostics scripts/archive/legacy-scripts/diag_ea.py; charts scripts/archive/legacy-scripts/charts_ea.py).
 - **Results (net R)**: EA-2 sweep-acceptance +113.1R/433/PF1.51 (all syms, both sides, 6/7 months); EA-5 cascade-exhaustion ETH/SOL +104.2R/367/PF1.69 (BTC −33.8R → banned); EA-1 −19.6R PF0.75, EA-1A ablation −32.1R PF0.98, EA-3 −14.9R PF0.82, EA-4 −31.7R PF0.45 → all suspended with autopsies. LIVE SET +217.3R/800/PF1.58/wr43.4%/maxDD45.1R.
 - **Deliverables**: desk/PLAYBOOK-EA-VALIDATED.md (sole card source from R546; engine rules, risk governance, terminal wiring table), download/R546_Validated_Trading_Playbook.docx+pdf (8pp, postcheck 8/9, visual-checked), download/charts/ea_equity.png + ea_by_symbol.png, data/backtest/* (trades.csv, results.json, diag.json, pickles, raw archives).
 - **Directives to atg-exec**: card intake restricted to Engine A/B; EA2/EA5-ETHSOL tagging; 50-fill scale-up gate; hftbacktest P1 next; SOP Annex A fold-in.
 
 ## R546 · 2026-11-18 18:40 UTC · zai-desk
-- **END-TO-END: EA archetypes backtested on real data → validated playbook shipped.** Real Binance USDT-M 15m klines (data.binance.vision, 69 archives, 57,819 bars × BTC/ETH/SOL, 2026-05-01→11-17); engine scripts/backtest_ea.py (no-lookahead, stop-first worst-case fills, fees+slip net, spec BE/time-stop/40-40-20 invariants; diagnostics scripts/diag_ea.py; charts scripts/charts_ea.py).
+- **END-TO-END: EA archetypes backtested on real data → validated playbook shipped.** Real Binance USDT-M 15m klines (data.binance.vision, 69 archives, 57,819 bars × BTC/ETH/SOL, 2026-05-01→11-17); engine scripts/backtest_ea.py (no-lookahead, stop-first worst-case fills, fees+slip net, spec BE/time-stop/40-40-20 invariants; diagnostics scripts/archive/legacy-scripts/diag_ea.py; charts scripts/archive/legacy-scripts/charts_ea.py).
 - **Results (net R)**: EA-2 sweep-acceptance +113.1R/433/PF1.51 (all syms, both sides, 6/7 months); EA-5 cascade-exhaustion ETH/SOL +104.2R/367/PF1.69 (BTC −33.8R → banned); EA-1 −19.6R PF0.75, EA-1A ablation −32.1R PF0.98, EA-3 −14.9R PF0.82, EA-4 −31.7R PF0.45 → all suspended with autopsies. LIVE SET +217.3R/800/PF1.58/wr43.4%/maxDD45.1R.
 - **Deliverables**: desk/PLAYBOOK-EA-VALIDATED.md (sole card source from R546; engine rules, risk governance, terminal wiring table), download/R546_Validated_Trading_Playbook.docx+pdf (8pp, postcheck 8/9, visual-checked), download/charts/ea_equity.png + ea_by_symbol.png, data/backtest/* (trades.csv, results.json, diag.json, pickles, raw archives).
 - **Directives to atg-exec**: card intake restricted to Engine A/B; EA2/EA5-ETHSOL tagging; 50-fill scale-up gate; hftbacktest P1 next; SOP Annex A fold-in.
@@ -14116,12 +14116,12 @@ analysis script rc=1
 ## R547 · 2026-11-18 19:20 UTC · zai-desk
 - **PORTFOLIO + FULL TERMINAL INTEGRATION shipped.** EA-6 SMC BOS+FVG validated on the same real Binance 15m data (945 trades, +206.9R, PF 1.40, all 3 syms); EA-7 (PF 0.49) and EA-8 (PF 0.26) suspended with autopsies. 3-engine portfolio (weights EA5 .467 / EA2 .30 / EA6 .233, inverse-maxDD risk parity): +130.8R weighted, PF 1.51, maxDD 25.6R, corr ≤0.12, 6/7 months positive.
 - **Terminal**: src/lib/strategy/playbook.ts (pure live detector, closed-bars only), GET /api/strategy/cards, POST /api/desk/punch (state.json orders[] + WAKE.md, config untouched, proxy.ts same-origin respected), Playbook▸Punch tab (badge R547) with qty-hint sizing + punched-order lifecycle. tsc exit 0; next build green; smoke-tested on real data (cards ok:true; punch order tp-* verified then desk files restored).
-- **Files**: scripts/backtest_portfolio.py, scripts/portfolio_assemble.py, scripts/charts_r547.py; data/backtest/{trades_v2,results_v2,portfolio,equity_portfolio}.{json,csv}; download/charts/r547_portfolio_equity.png; PLAYBOOK V2 appended below V1 in desk/PLAYBOOK-EA-VALIDATED.md (still sole card source — now 3 engines).
+- **Files**: scripts/backtest_portfolio.py, scripts/trading/portfolio_assemble.py, scripts/desk/rounds/charts_r547.py; data/backtest/{trades_v2,results_v2,portfolio,equity_portfolio}.{json,csv}; download/charts/r547_portfolio_equity.png; PLAYBOOK V2 appended below V1 in desk/PLAYBOOK-EA-VALIDATED.md (still sole card source — now 3 engines).
 
 ## R547 · 2026-11-18 19:20 UTC · zai-desk
 - **PORTFOLIO + FULL TERMINAL INTEGRATION shipped.** EA-6 SMC BOS+FVG validated on the same real Binance 15m data (945 trades, +206.9R, PF 1.40, all 3 syms); EA-7 (PF 0.49) and EA-8 (PF 0.26) suspended with autopsies. 3-engine portfolio (weights EA5 .467 / EA2 .30 / EA6 .233, inverse-maxDD risk parity): +130.8R weighted, PF 1.51, maxDD 25.6R, corr ≤0.12, 6/7 months positive.
 - **Terminal**: src/lib/strategy/playbook.ts (pure live detector, closed-bars only), GET /api/strategy/cards, POST /api/desk/punch (state.json orders[] + WAKE.md, config untouched, proxy.ts same-origin respected), Playbook▸Punch tab (badge R547) with qty-hint sizing + punched-order lifecycle. tsc exit 0; next build green; smoke-tested on real data (cards ok:true; punch order tp-* verified then desk files restored).
-- **Files**: scripts/backtest_portfolio.py, scripts/portfolio_assemble.py, scripts/charts_r547.py; data/backtest/{trades_v2,results_v2,portfolio,equity_portfolio}.{json,csv}; download/charts/r547_portfolio_equity.png; PLAYBOOK V2 appended below V1 in desk/PLAYBOOK-EA-VALIDATED.md (still sole card source — now 3 engines).
+- **Files**: scripts/backtest_portfolio.py, scripts/trading/portfolio_assemble.py, scripts/desk/rounds/charts_r547.py; data/backtest/{trades_v2,results_v2,portfolio,equity_portfolio}.{json,csv}; download/charts/r547_portfolio_equity.png; PLAYBOOK V2 appended below V1 in desk/PLAYBOOK-EA-VALIDATED.md (still sole card source — now 3 engines).
 ## R550 · 2026-11-18 19:00 UTC · zai-desk
 
 **Market**: BTC 63,050.0 (-2.9%)  ETH 1,769.27 (-3.0%)  SOL 73.72 (-1.9%)  XAU 3,740.22 (-3.0%)  XAG 45.250 (-4.9%)
@@ -16610,10 +16610,10 @@ ead_file validation.
 
 ## EXEC · 2026-11-19 17:35 UTC · atg-exec (Round R586 Execution, Section 4 Telemetry & 48H Forensic Dumps)
 - **Section 4 & 48-Hour Order-Flow Forensic Module Deployed**:
-  - `scripts/fetch_full_asset_telemetry.py` enhanced with 15-endpoint concurrent pipeline matching Section 4.0 (3-Tier Perception Hierarchy) and Section 4.1 (Tabs 1 to 9).
+  - `scripts/data-pipeline/fetch_full_asset_telemetry.py` enhanced with 15-endpoint concurrent pipeline matching Section 4.0 (3-Tier Perception Hierarchy) and Section 4.1 (Tabs 1 to 9).
   - 48-hour continuous order-flow behavioral engine implemented: slices 192 15m bars, computes net delta, buy ratio, cumulative delta momentum shift (24h#1 vs 24h#2), and active CVD divergences.
   - Successfully generated 48H Forensic Dumps: `desk/deepscan/48H_TELEMETRY-BTC-1795109659441.json` (3.14 MB), `48H_TELEMETRY-ETH-1795109693146.json`, and `48H_TELEMETRY-XAU-1795109705121.json`.
-  - Upgraded `scripts/agent_wake_verification.py` to auto-trigger 48h deepscan dumps on every activation round.
+  - Upgraded `scripts/archive/legacy-scripts/agent_wake_verification.py` to auto-trigger 48h deepscan dumps on every activation round.
 - **In-Flight Position Surveillance**:
   - `EURUSD.pi` (Blueberry MT5 Ticket #20297836): Current price 1.09801 (+22.5 pips excursion, +$4.50 USD profit, +2.08R excursion). SL remains locked at Breakeven 1.10026. Downside risk: strictly $0.00 USD. Target: 1.09550 (+8.8R / +$9.52 USD).
   - `TIAUSD` (Delta India Position #17330): Mark price 0.34195 (+4.59R excursion, +$0.161 USD profit, +95% ROE). SL locked at Breakeven 0.35800. Downside risk: strictly $0.00 USD. Target: 0.33270.
@@ -16643,7 +16643,7 @@ ead_file validation.
 ## EXEC · 2026-11-19 17:58 UTC · atg-exec (Round R587 Execution, Universal Dual-Venue Mandate for S10/EA-07)
 - **Universal Multi-Asset & Dual-Venue S10 Mandate Enacted**:
   - Formally codified in `CANONICAL_MASTER_SPECIFICATION.md`: S10 (In-Trend Consolidation Shelf / Fast EMA Pullback) and EA-07 (In-Trend Shelf Breakdown) are NOT restricted to BTC; they apply universally across ALL 61 Curated assets on BOTH operating venues (Delta Exchange India & Blueberry MT5).
-  - Updated `scripts/agent_wake_verification.py` to recognize `S10` model scores in candidate qualification.
+  - Updated `scripts/archive/legacy-scripts/agent_wake_verification.py` to recognize `S10` model scores in candidate qualification.
   - Active runner surveillance: `EURUSD.pi` (MT5 #20297836) SHORT sits at 1.09801 (+2.08R excursion, +$4.50 USD profit, SL at BE 1.10026); `TIAUSD` (Delta #17330) SHORT sits at 0.34195 (+4.59R excursion, +95% ROE, SL at BE 0.35800); `DOGEUSD` (Delta #14745) SHORT sits at 0.05878 (+0.73R excursion, +167% ROE, risk strictly $0.14 USD).
   - Standing maker limits validated on MT5 and Delta CLOB; total portfolio downside risk strictly $0.14 USD (< 0.005% of capital). Single 1200s timer armed for R588.
 ## R644 · 2026-11-19 18:04 UTC · zai-desk
@@ -16663,7 +16663,7 @@ ead_file validation.
 
 ## EXEC · 2026-11-19 18:16 UTC · atg-exec (Round R588 Execution, Expanded Universe Upgrade & S10 Invariant Formalization)
 - **Complete Universe Scope Upgrade (Knowledge Gap / Lacuna Permanently Rectified)**:
-  - Formally updated `desk/CANONICAL_MASTER_SPECIFICATION.md` and `scripts/agent_wake_verification.py` to eradicate the static 61-asset boundary.
+  - Formally updated `desk/CANONICAL_MASTER_SPECIFICATION.md` and `scripts/archive/legacy-scripts/agent_wake_verification.py` to eradicate the static 61-asset boundary.
   - Dynamically queries all 228 perpetuals from `/api/binance/universe` + classic indices (231 assets audited in 51s, 0 A+, 17 Grade B, 214 Vetoed).
   - Explicitly unified with Delta Exchange India's 261 perpetual products (180+ Crypto, 60+ TradFi Stocks/Commodities) and Blueberry MT5 multi-asset CFDs.
 - **S10 In-Trend Consolidation Shelf / Micro-Pullback Formalization (Delta Chart Forensic Audit)**:
@@ -16774,7 +16774,7 @@ ead_file validation.
 ## EXEC · 2026-11-19 19:15 UTC · atg-exec (Round R592 Execution, Directive 2026-11-20 Codification & Running Trades 360° TP/SL Optimization)
 - **Directive 2026-11-20 Codified & Enacted**:
   - Enacted `[P5-11] [MANDATORY] [RUNNING_TRADE_360_TELEMETRY_TP_SL_OPTIMIZER]` in `CANONICAL_MASTER_SPECIFICATION.md`: Every round pulls 360° telemetry (`liqlevels`, `stopmap`, `bookwalls`, `market`, `cvd`, `fp`) for every running position across Delta and MT5 to optimize on-exchange SL and TP orders.
-  - Updated `scripts/agent_wake_verification.py` to automatically ingest full 360° telemetry for active positions.
+  - Updated `scripts/archive/legacy-scripts/agent_wake_verification.py` to automatically ingest full 360° telemetry for active positions.
 - **Running Trades 360° Telemetry & Dynamic TP/SL Optimization Audit**:
   - `EURUSD.pi` (Blueberry MT5 Ticket #20297836): Short 0.02 lots @ 1.10026, current 1.09762 (+26.4 pips excursion, +$5.28 USD profit, +2.35R). SL locked at Breakeven 1.10026 ($0.00 downside risk). Hold runner into TP 1.09550 (+8.8R / +$9.52 USD).
   - `TIAUSD` (Delta India Position #17330): Short -10 contracts @ 0.35800, mark 0.34520 (+3.74R excursion, +$0.129 USD profit, +76% ROE). 360° Telemetry confirms Session VAL at 0.3361 and Day VWAP -3σ at 0.3300. SL locked at Breakeven 0.35800 ($0.00 risk). TP at 0.33270 sits directly at the extreme expansion boundary. Hold into TP 0.33270.
@@ -17949,7 +17949,7 @@ ead_file validation.
 ## EXEC · R622 · 2026-11-20 05:19 UTC · atg-exec
 
 ### 1. Mandatory Wake & Cognitive Grounding
-- **Pre-Flight Bootstrap**: scripts/agent_wake_verification.py --round 622 executed with EXIT CODE 0.
+- **Pre-Flight Bootstrap**: scripts/archive/legacy-scripts/agent_wake_verification.py --round 622 executed with EXIT CODE 0.
 - **Kernel Grounding**: Upgraded gent_wake_verification.py to dynamically locate <!-- KERNEL_END -->. Full 431 lines of Kernel (Parts I-VI, K-1 through K-8, C-01 through C-10, and Section 18) loaded and verified on disk.
 - **Spec Enhancements Codified**:
   * Added [MT5-05] [SPEC] [ALPHA_EA_TRADE_PROTECTION_INVARIANT]: Absolute hands-off rule for all positions/orders with comment starting with 'ALPHA'. Programmatic hard block in scripts/mt5_cg_trader.py.
@@ -18258,7 +18258,7 @@ ead_file validation.
   - **Machine State Audit (`desk/state.json`)**:
     * Verified 100% synchronized with live exchange endpoints. Zero state drift.
   - **Governance & Pre-Flight Gate Status**:
-    * `scripts/agent_wake_verification.py` passed exit code 0.
+    * `scripts/archive/legacy-scripts/agent_wake_verification.py` passed exit code 0.
     * 236 assets audited across 16 dimensions; `desk/telemetry_16d_universe.json` verified.
     * Single dynamic recursion timer (task-78, 1200s) verified active.
 
@@ -18271,7 +18271,7 @@ ead_file validation.
 - **Continuous Improvement**: Maintained strict adherence to [MT5-05] Alpha Protection Invariant across all 17 co-located EA positions, ensuring zero parameter drift while rigorously auditing cg_terminal positions (EURUSD.pi, BTCUSD.pi).
 
 ### [STEP 1: PRE-FLIGHT VERIFICATION CHECKLIST]
-- **Execution Script**: `scripts/agent_wake_verification.py --round 632` executed with **EXIT CODE 0 (PASS)**.
+- **Execution Script**: `scripts/archive/legacy-scripts/agent_wake_verification.py --round 632` executed with **EXIT CODE 0 (PASS)**.
 - **Specification Load**: Lines 1-165 of CANONICAL_MASTER_SPECIFICATION.md read and verified in full; 986 operational lines loaded.
 - **Dependency Initialization**: Verified physical on-disk presence for trading-skills, superpowers, coderabbit, gravitas-native, chrome-devtools-plugin, harness-antigravity.
 - **16D Telemetry Dump**: Generated and verified at `desk/telemetry_16d_universe.json` (54 assets dumped, 236 market scan assets audited).

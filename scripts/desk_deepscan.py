@@ -74,7 +74,7 @@ except Exception as _e:
     # 2026-11-10 lesson (2nd daemon-race corruption): a silently-empty map made
     # DOGE/LINK print false "feed dead" §7 readings. Refuse to scan instead.
     sys.exit(f"ERROR: desk/state.json is unreadable ({_e}) — daemon/ desk write race. "
-             f"Repair first (scripts/repair_state_json.py pattern), then re-run. "
+             f"Repair first (scripts/ops/repair_state_json.py pattern), then re-run. "
              f"Refusing to scan with a dead symbol_map (false feed-dead readings are worse than no scan).")
 MT5_MAP = _cfg.get("symbol_map") or {}
 if len(MT5_MAP) < 17:

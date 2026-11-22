@@ -93,7 +93,7 @@ On EVERY wake-up, autonomous recursion round, or trading response, the execution
 1. **Gate C-01 (Single Spec Bound & Mandatory read_file Wake-Up Invariant)**: `CANONICAL_MASTER_SPECIFICATION.md` is bound as the sole operational manual. Antigravity must execute `read_file` on this document on every wake-up as an ingrained habit before analyzing markets or placing orders. Multi-file divergences are purged.
 2. **Gate C-02 (Plugins, Skills & MCP Infrastructure Verification)**: Verify active availability of essential MCP servers (`delta-exchange-mcp`, `persistent-memory`, etc.), plugins, and analytical skills before formulation.
 3. **Gate C-03 (Cognitive Thinking Chain & 4-Voice Debate)**: Ensure no trade or code is generated without Socratic stress-testing across the 10 mental models and 4-voice desk debate.
-4. **Gate C-04 (Purge Scanner / Mandatory Individual Asset Audit)**: Scanners and pre-aggregated screener tables (`/api/cg/screener`) are **STRICTLY PURGED**. On every wake-up, execute direct individual endpoint-by-endpoint analysis (`/api/cg/market?sym=`, `/api/cg/signals?sym=`, `/api/cg/liqlevels?sym=`, `/api/cg/cvd?sym=`, `/api/cg/narrative?sym=`) for each and every one of the 234 Expanded Universe Assets (30 Crypto + 28 TradFi + 173 Mutual Delta/Binance + 3 Classic) individually using `scripts/individual_asset_evaluator.py`. Zero reliance on pre-filtered scanner tables.
+4. **Gate C-04 (Purge Scanner / Mandatory Individual Asset Audit)**: Scanners and pre-aggregated screener tables (`/api/cg/screener`) are **STRICTLY PURGED**. On every wake-up, execute direct individual endpoint-by-endpoint analysis (`/api/cg/market?sym=`, `/api/cg/signals?sym=`, `/api/cg/liqlevels?sym=`, `/api/cg/cvd?sym=`, `/api/cg/narrative?sym=`) for each and every one of the 234 Expanded Universe Assets (30 Crypto + 28 TradFi + 173 Mutual Delta/Binance + 3 Classic) individually using `scripts/trading/individual_asset_evaluator.py`. Zero reliance on pre-filtered scanner tables.
 5. **Gate C-05 (CLOB Reconciliation)**: Query `get_wallet_balances`, `get_margined_positions`, and `get_open_orders` live on Delta Exchange India (`india_prod`, Account `#26902927`).
 6. **Gate C-06 (First-Two-Fills Circuit Armed)**: Verify that if any 2 standing maker orders execute, all remaining candidate orders will be immediately terminated.
 7. **Gate C-07 (16-Dimension Telemetry Extraction)**: Extract all 16 live dimensions for any proposed candidate setup before submitting orders.
@@ -865,7 +865,7 @@ flowchart LR
 ## SECTION 17. FRESH 61-ASSET AUDIT & TERMINAL GRADE A SIGNAL EVALUATION
 
 ### 17.1 Zero-Echo Individual Asset Screening Architecture
-To guarantee that zero trading opportunities are missed, the desk operates a two-stage forensic screening engine (`scripts/individual_asset_evaluator.py`):
+To guarantee that zero trading opportunities are missed, the desk operates a two-stage forensic screening engine (`scripts/trading/individual_asset_evaluator.py`):
 * **Stage 1 (Parallel Screening across all 61 Assets)**: Direct endpoint queries (`/api/cg/narrative`, `/api/cg/market`, `/api/cg/signals`) audit every asset in the Curated 61 universe (30 Crypto USDT-M + 28 TradFi USDT-M + 3 Classic) from scratch in ~15–30 seconds.
 * **Stage 2 (Deep Telemetry Extraction on Candidates)**: For every candidate meeting Grade A/A+ with Best $R \ge 2.00\text{R}$, the engine queries deep telemetry (`/api/cg/oracle`, `/api/cg/liqlevels`, book walls).
 
@@ -897,7 +897,7 @@ LAYER 2: Workspace & Global Cognitive Kernel Directives (Rule Level)
 
 LAYER 3: Mandatory Pre-Flight Verification Checklist (Self-Enforcing Code Gate)
          Every response MUST open with the completed Pre-Flight Verification Checklist header:
-         - Fresh 61-curated asset screening executed from scratch (scripts/individual_asset_evaluator.py).
+         - Fresh 61-curated asset screening executed from scratch (scripts/trading/individual_asset_evaluator.py).
          - Persistent memory checked via get_user_profile and search_past_memory.
          - Delta Exchange India CLOB & Solvency verified via live MCP tools.
          - Single 1200s timer verified.
@@ -954,7 +954,7 @@ THE 12 BATTLE-TESTED MICROSTRUCTURE PITFALLS & MANDATORY PREVENTATIVE INVARIANTS
 
 ### 19.10 PIT-10: Dev Server HTTP Concurrency Dropping
 * **The Failure Mode**: Firing 180 concurrent HTTP requests to a single Next.js local dev server causes socket exhaustion, timeouts, and false `UNKNOWN` regime classifications.
-* **The Immutable Invariant**: All automated screening scripts (`scripts/individual_asset_evaluator.py`) must use bounded concurrency (`max_workers=4`) with gentle inter-call pacing.
+* **The Immutable Invariant**: All automated screening scripts (`scripts/trading/individual_asset_evaluator.py`) must use bounded concurrency (`max_workers=4`) with gentle inter-call pacing.
 
 ### 19.11 PIT-11: Active Cascade Climax Gate (`Liq 5m > $500k`)
 * **The Failure Mode**: Placing limit orders into an active cascade exceeding $\$500\text{k}$ in 5 minutes catches falling knives during violent liquidation cascades.

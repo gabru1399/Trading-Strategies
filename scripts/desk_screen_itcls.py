@@ -3,7 +3,7 @@
 desk_screen_itcls.py — Universe screen for ITCLS (In-Trend Counter-Liquidation
 Sweep) pullback setups at liquidation levels, per desk/CANONICAL_MASTER_SPECIFICATION.md.
 
-Doctrine (scripts/generate_itcls_intents.py):
+Doctrine (scripts/archive/legacy-scripts/generate_itcls_intents.py):
   - HTF bias from H4 EMA13x89 (2 votes) + H1 EMA13x89 (1 vote) + Day VWAP position (1 vote).
   - BULLISH -> LONG at the dominant long-liquidation floor below price (flush zone).
   - BEARISH -> SHORT at the dominant short-liquidation shelf above price (squeeze zone).

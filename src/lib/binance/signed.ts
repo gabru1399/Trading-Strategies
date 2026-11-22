@@ -3,8 +3,9 @@ import { createHmac } from "node:crypto";
 /**
  * Binance USDT-M futures SIGNED client — the demo-trading lane.
  *
- * Credentials live ONLY in .env (gitignored by design, see SESSION-STATE
- * handoff protocol): BINANCE_API_KEY / BINANCE_API_SECRET / BINANCE_MODE.
+ * Credentials live ONLY in .env (gitignored by design, see
+ * docs/reports/SESSION-STATE.md handoff protocol): BINANCE_API_KEY /
+ * BINANCE_API_SECRET / BINANCE_MODE.
  * The provided key set is a futures TESTNET key (verified 2026-11-11:
  * testnet.binancefuture.com /fapi/v2/account → 200, canTrade, ~4096 USDT
  * of fake funds).

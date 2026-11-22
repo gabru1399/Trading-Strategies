@@ -6,7 +6,7 @@ import json
 import argparse
 
 def run_step(round_id, step):
-    cmd = [sys.executable, "scripts/agent_wake_verification.py", "--round", round_id, "--step", str(step)]
+    cmd = [sys.executable, "scripts/archive/legacy-scripts/agent_wake_verification.py", "--round", round_id, "--step", str(step)]
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
         print(f"Error on step {step}: {res.stderr}")
@@ -36,7 +36,7 @@ def main():
                 break
     
     print("=== Running --require-formulation-reads ===")
-    cmd = [sys.executable, "scripts/agent_wake_verification.py", "--round", round_id, "--require-formulation-reads"]
+    cmd = [sys.executable, "scripts/archive/legacy-scripts/agent_wake_verification.py", "--round", round_id, "--require-formulation-reads"]
     res = subprocess.run(cmd, capture_output=True, text=True)
     print(res.stdout)
     if res.returncode != 0:

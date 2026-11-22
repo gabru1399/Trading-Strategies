@@ -63,7 +63,7 @@ git checkout newmain/main -- HFT Delta-Fibonacci-Institutional-Business
 git show newmain/main:INSTITUTIONAL_AUDIT_REPORT.md > INSTITUTIONAL_AUDIT_REPORT.md
 git show newmain/main:SECURITY.md > SECURITY.md
 git show newmain/main:docs/ci-workflow.yml > docs/ci-workflow.yml
-git show newmain/main:scripts/parse_check_cg.py > scripts/parse_check_cg.py
+git show newmain/main:scripts/ops/parse_check_cg.py > scripts/ops/parse_check_cg.py
 mkdir -p .github/workflows && cp docs/ci-workflow.yml .github/workflows/ci.yml
 echo "   engines: $(find HFT -type f | wc -l) + $(find Delta-Fibonacci-Institutional-Business -type f | wc -l) files"
 

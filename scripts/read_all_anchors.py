@@ -8,7 +8,7 @@ cwd = 'CG-Terminal'
 
 for step in range(0, 12):
     while True:
-        cmd = [sys.executable, 'scripts/agent_wake_verification.py', '--round', round_id, '--step', str(step)]
+        cmd = [sys.executable, 'scripts/archive/legacy-scripts/agent_wake_verification.py', '--round', round_id, '--step', str(step)]
         p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
         if p.returncode != 0:
             err = p.stderr.strip() or p.stdout.strip()
@@ -32,7 +32,7 @@ for step in range(0, 12):
             print("No receipt found in output")
             break
 
-cmd_check = [sys.executable, 'scripts/agent_wake_verification.py', '--round', round_id, '--require-formulation-reads']
+cmd_check = [sys.executable, 'scripts/archive/legacy-scripts/agent_wake_verification.py', '--round', round_id, '--require-formulation-reads']
 p_check = subprocess.run(cmd_check, cwd=cwd, capture_output=True, text=True)
 print('Formulation reads check code:', p_check.returncode)
 print(p_check.stdout[:300])

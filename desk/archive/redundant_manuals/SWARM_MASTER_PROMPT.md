@@ -247,7 +247,7 @@ Before executing ANY phase, perform this mandatory self-check:
 
 ### PHASE 1: 30-ASSET UNIVERSE SCREENING & TAB 7 REGIME STRATEGY ROUTING
 
-- **1.1** Ingest closed-candle screener telemetry for ALL 30 crypto USDT-M perps, via `node scripts/dump_matrix.mjs` or `http://127.0.0.1:3000/api/cg/screener`.
+- **1.1** Ingest closed-candle screener telemetry for ALL 30 crypto USDT-M perps, via `node scripts/ops/dump_matrix.mjs` or `http://127.0.0.1:3000/api/cg/screener`.
 - **1.2** For every active candidate, cross-reference Tab 7 (`/api/cg/narrative`) to identify `regime` and `activeModel`. Filter eligible archetypes via Section 5.1.
 - **1.3** Note: TradFi equity/index perps are HALTED on weekends.
 - **1.4** Output the FULL, UNCOMPRESSED 30-row Universe Screening Matrix with exactly these columns:

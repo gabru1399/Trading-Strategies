@@ -5,14 +5,14 @@ scripts/run_canonical_decide.py
 
 NOTICE: This legacy script has been quarantined per GPT ASTRA Audit Finding F02.
 Reason: It contains hardcoded card templates and fallback literals.
-Authority: Use `scripts/individual_asset_evaluator.py` for live, endpoint-by-endpoint,
+Authority: Use `scripts/trading/individual_asset_evaluator.py` for live, endpoint-by-endpoint,
 zero-mock evaluation across the full expanded universe.
 """
 
 import sys
 if "--force" not in sys.argv:
     print("[ERROR] scripts/run_canonical_decide.py is QUARANTINED under Audit Finding F02.")
-    print("Use scripts/individual_asset_evaluator.py for authoritative live analysis.")
+    print("Use scripts/trading/individual_asset_evaluator.py for authoritative live analysis.")
     sys.exit(1)
 
 import urllib.request
