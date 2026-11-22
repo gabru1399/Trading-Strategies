@@ -70,7 +70,11 @@ export default function StopmapCanvas({
     const yOf = (p: number) => toPx(sy, p);
 
     // heat cells
-    const maxCell = Math.max(1, ...grid.flatMap((g) => g.cells.map((c) => c[1])));
+    // maxCell via a LOOP, not Math.max(...spread): Model-1/2/3 windows can
+    // carry 30k+ cells (7d pair view) and the spread blows the call stack
+    // (RangeError, live-repro'd on XAU model 3 pair 7d — 2026-11-22).
+    let maxCell = 1;
+    for (const bar of grid) for (const c of bar.cells) if (c[1] > maxCell) maxCell = c[1];
     const rowH = Math.max(1, plotH / y.length);
     for (const bar of grid) {
       const x = xOf(bar.ts);

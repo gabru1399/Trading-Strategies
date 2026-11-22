@@ -6,40 +6,47 @@ import { isAsset } from "@/lib/cg/assets";
 import { isCuratedPerp } from "@/lib/cg/assets";
 import { anyTerminalSym } from "@/lib/cg/sym-gate";
 import { BoundedMap } from "@/lib/cg/bounded";
+import {
+  fetchModel1Heatmap,
+  HEATMAP_RANGES,
+  HeatmapUpstreamError,
+  type HeatmapMode,
+  type HeatmapModelId,
+} from "@/lib/cg/model1-heatmap";
 
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/cg/stopmap?sym=BTC&endTime=<unix-sec>
+ * GET /api/cg/stopmap?sym=BTC[&model=1|2|3][&mode=coin|pair][&range=12h..2y][&endTime=<unix-sec>]
  *
- * Liquidation heatmap ("stops map") — the estimated leveraged-position
- * liquidation exposure grid of the Coinglass
- * /pro/futures/LiquidationHeatMap page (Model 1).
+ * Liquidation heatmap ("stops map") — the CURRENT Coinglass
+ * /LiquidationHeatMap page (the "new UI": Model 1/2/3 tabs, Pair/Coin
+ * toggle, 12h..2y ranges), plus the legacy BTC 24h window.
  *
- * Anonymous access serves the 24-hour window (288 × 5-minute bars) —
- * the exact default view of the live page. `endTime` pages history so
- * the local continuity engine archives every window without gaps.
+ * ── model / mode / range (the live page's semantics, 2026-11-22) ──
+ *   model 1 = the classic 5m/15m/… leverage grid (DEFAULT)
+ *   model 2 / 3 = the page's alternative leverage models
+ *   mode  coin = ALL venues aggregated under the plain symbol (DEFAULT —
+ *                the most useful view for pullback trading)
+ *   mode  pair = the Binance execution venue only
+ *   range = 12h|24h|48h|3d|7d|14d|30d|90d|180d|1y|2y
+ * The response carries the page's exact panel math: keyLevels (the
+ * "Key liquidation levels" panel: top-4 local maxima per side of the last
+ * column), overview (the "Market overview" panel: open longs/shorts,
+ * total, largest level, price step, column period), the sparse heat grid
+ * and the cumulative swept-from-price curves. Panel math verified 1:1
+ * against the operator's screenshots (XAU coin 3d: 3614→13.6M, 3510→
+ * 18.3M, total 458.5M, step 3.38/15m).
  *
- * Pure API data: every number comes from /api/index/v2/liqHeatMap.
+ * ── auth tiers (live-verified 2026-11-22, see
+ *    scripts/research/probe_session_matrix.mjs) ──
+ *   CG_SESSION set   → every symbol, models 1/2/3, coin+pair, 12h..90d
+ *                      (180d/1y/2y need a paid grade → upstream 40003)
+ *   CG_SESSION unset → BTC pair 24h (+endTime history) natively;
+ *                      every other perp falls back to the honest
+ *                      LIQ-SNAPSHOT ROLLING heatmap (badged, never a 400).
  *
- * UPSTREAM CONTRACT (live-mined from the page bundle + probed 2026-11-21 —
- * see scripts/research/probe_xau_matrix.mjs and xau-pullback-levels.json):
- * The page exposes THREE models and TWO modes:
- *   model 1 → fapi /api/index/v2/liqHeatMap            (pair)  | /api/index/aggregate/liqHeatMap            (coin)
- *   model 2 → fapi /api/index/v5/liqHeatMap            (pair)  | /api/index/v3/aggregate/liqHeatMap          (coin)
- *   model 3 → fapi /api/index/v6/liqHeatMap + cp:false (pair)  | /api/index/v4/aggregate/liqHeatMap          (coin)
- * "pair" mode = one venue's open interest (symbol like Binance_BTCUSDT);
- * "coin" mode = ALL venues aggregated under a plain coin symbol (symbol=XAU).
- * Timeframes: model 1/2 use interval/limit (24h=5/288, 48h=15/192,
- * 3d=15/288, 7d=30/336, 30d=h2/372); model 3 uses range (12h…2y).
- * ANONYMOUS WALL (probed, isolated, 30 s spacing): only BTC + 24h is served
- * without a logged-in coinglass.com session — ETH/XAU coin-mode, 48h+ windows
- * and models on other symbols all return 40000. fapi also REJECTS the
- * `encryption:true`/`cache-ts-v2` header pair on these routes (50001): plain
- * requests with the `data` token param only.
- * Non-BTC perps therefore use the honest rolling liq-levels construction
- * below (multi-venue /api/liquidationLevels/v2 snapshots) — for XAU/XAG that
- * IS the pullback-magnet ladder (venue set: Binance/OKX/Bybit/Bitget/Gate).
+ * Pure API data: every number comes from the fapi liqHeatMap family.
  */
 
 /** module-level cache keyed by sym|endTime — the `data` token changes every
@@ -72,12 +79,98 @@ export async function GET(req: NextRequest) {
   if (!(await anyTerminalSym(sym))) {
     return NextResponse.json({ ok: false, error: `unknown asset ${sym}` }, { status: 400 });
   }
+
+  const hasSession = Boolean(process.env.CG_SESSION?.trim());
+
+  // ── NEW SURFACE: /api/cg/stopmap?sym=XAU&model=1&mode=coin&range=3d ──
+  // requested whenever any of model/mode/range is present; the plain
+  // ?sym=BTC legacy form keeps its exact old behavior.
+  const modelParam = sp.get("model");
+  const modeParam = sp.get("mode");
+  const rangeParam = sp.get("range");
+  if (modelParam || modeParam || rangeParam) {
+    const model = (modelParam ?? "1") as HeatmapModelId;
+    const mode = (modeParam ?? "coin") as HeatmapMode;
+    const range = rangeParam ?? "24h";
+    if (!["1", "2", "3"].includes(model)) {
+      return NextResponse.json({ ok: false, error: `model must be 1, 2 or 3` }, { status: 400 });
+    }
+    if (mode !== "coin" && mode !== "pair") {
+      return NextResponse.json({ ok: false, error: `mode must be coin or pair` }, { status: 400 });
+    }
+    if (!HEATMAP_RANGES.includes(range)) {
+      return NextResponse.json({ ok: false, error: `range must be one of ${HEATMAP_RANGES.join(", ")}` }, { status: 400 });
+    }
+    if (!isCuratedPerp(sym)) {
+      return NextResponse.json({
+        ok: true,
+        supported: false,
+        sym,
+        reason: "Liquidation heatmaps require perp leverage tiers (unavailable for classic cash/CFD instruments)",
+        dataAt: Date.now(),
+        ageMs: 0,
+        stale: false,
+        source: "stopmap-gate",
+      });
+    }
+    try {
+      const m = await fetchModel1Heatmap({ sym, model, mode, range });
+      return NextResponse.json({
+        ok: true,
+        sym,
+        symbol: m.symbol,
+        reference: mode === "coin" ? `aggregate:${sym}` : m.symbol,
+        model: m,
+        window: {
+          interval: `${m.overview.columnMinutes}m`,
+          bars: m.candles.length,
+          from: m.candles[0]?.ts,
+          to: m.candles[m.candles.length - 1]?.ts,
+        },
+        instrument: m.instrument,
+        dataAt: m.updateTime,
+        ageMs: Date.now() - m.updateTime,
+        stale: Date.now() - m.updateTime > 10 * 60_000,
+        source: `coinglass:model${model}-${mode}:${hasSession ? "session" : "anonymous"}`,
+        updatedAt: m.updateTime,
+      });
+    } catch (e) {
+      // cgGet's decryptCgResponse throws plain Errors ("upstream code X: …")
+      // before this layer sees the payload — map those codes the same way.
+      const upstreamCode = e instanceof Error ? /^upstream code (\d+)/.exec(e.message)?.[1] : undefined;
+      if (e instanceof HeatmapUpstreamError || upstreamCode) {
+        const code = e instanceof HeatmapUpstreamError ? e.code : (upstreamCode as string);
+        const status = code === "40003" ? 402 : 502;
+        const hint =
+          code === "40000"
+            ? hasSession
+              ? "session token rejected — update CG_SESSION (node scripts/cg-session.mjs)"
+              : "this symbol/range needs a Coinglass login — set CG_SESSION in .env (see scripts/cg-session.mjs)"
+            : code === "40003"
+              ? "this range (180d/1y/2y) needs a paid Coinglass grade"
+              : code === "50001"
+                ? "upstream rate-limited, retry shortly"
+                : "upstream returned no heatmap data";
+        return NextResponse.json(
+          { ok: false, error: `liqHeatMap ${code}: ${hint}`, code },
+          { status }
+        );
+      }
+      return NextResponse.json(
+        { ok: false, error: e instanceof Error ? e.message : "fetch failed" },
+        { status: 502 }
+      );
+    }
+  }
+
+  // ── LEGACY: plain ?sym=… form (BTC native, others rolling) ──
   // The anonymous /api/index/v2/liqHeatMap endpoint serves BTC only — every
   // other symbol returns upstream code 40000 (live-verified for ETH/SOL/XRP/
   // XAU/XAG across the v1/v2/v3/v5/v6 and aggregate variants). The other
   // curated perps get the honest LIQ-SNAPSHOT ROLLING HEATMAP (archived +
   // live multi-venue liquidation levels — see liq-heatmap.ts), clearly
-  // badged, never a dead 400.
+  // badged, never a dead 400. With CG_SESSION set the caller can instead
+  // use the full model/mode/range surface above for ANY symbol.
   if (sym !== "BTC") {
     if (!isCuratedPerp(sym)) {
       return NextResponse.json({

@@ -139,7 +139,7 @@ export function decryptCgResponse(resp: CgResponse, cacheTs: string, url: string
 
 /** Build the standard header set the web client sends. */
 export function cgHeaders(cacheTs: string): Record<string, string> {
-  return {
+  const h: Record<string, string> = {
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     Origin: "https://www.coinglass.com",
@@ -150,4 +150,14 @@ export function cgHeaders(cacheTs: string): Record<string, string> {
     language: "en",
     obe: makeObeToken(Number(cacheTs)),
   };
+  // Coinglass web session (the `obe` cookie of a logged-in browser, set via
+  // CG_SESSION in .env). When present it REPLACES the anonymous token in the
+  // obe header: the liqHeatMap family then serves Model 1/2/3 heatmaps for
+  // any symbol (live-verified 2026-11-22: anonymous = BTC pair 24h only,
+  // code 40000; with the session the full 12h..90d matrix serves — see
+  // scripts/research/probe_session_matrix.mjs). 180d/1y/2y still require a
+  // paid grade (code 40003).
+  const session = process.env.CG_SESSION?.trim();
+  if (session) h.obe = session;
+  return h;
 }

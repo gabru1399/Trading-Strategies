@@ -369,10 +369,20 @@ async function toolCvdState(args) {
 
 async function toolStopmap(args) {
   const sym = (args?.sym ?? "BTC").toUpperCase();
+  // NEW (2026-11-22): model/mode/range surface — the CURRENT Coinglass
+  // /LiquidationHeatMap page (Model 1/2/3 tabs, Pair/Coin toggle,
+  // 12h..2y ranges). Requires CG_SESSION in the terminal's .env for
+  // anything beyond BTC pair 24h (the anonymous upstream wall).
+  const model = ["1", "2", "3"].includes(String(args?.model)) ? String(args.model) : null;
+  const mode = args?.mode === "pair" ? "pair" : args?.mode === "coin" ? "coin" : null;
+  const range = typeof args?.range === "string" && args.range ? args.range : null;
+  const wantsNewSurface = Boolean(model || mode || range);
   let endQ = "";
   const endN = Number(args?.endTime);
   if (Number.isFinite(endN) && endN > 0) endQ = `&endTime=${Math.floor(endN)}`;
-  const d = await api(`/api/cg/stopmap?sym=${sym}${endQ}`);
+  const newQ = `&model=${model ?? "1"}&mode=${mode ?? "coin"}&range=${encodeURIComponent(range ?? "24h")}`;
+
+  const d = await api(`/api/cg/stopmap?sym=${sym}${wantsNewSurface ? newQ : endQ}`);
   if (!d.ok) throw new Error(d.error || "stopmap failed");
   // honest degradation: non-BTC perps serve the rolling liq-snapshot heatmap
   // from archived liqlevels — until the engine's rotation archives that sym,
@@ -382,6 +392,35 @@ async function toolStopmap(args) {
   }
   const m = d.model;
   if (!m) throw new Error("stopmap returned no model");
+
+  // Model-1/2/3 surface: key levels + market overview (the live page's panels)
+  if (m.keyLevels && m.overview) {
+    const ov = m.overview;
+    const pct = (x) => (x * 100) / (ov.total || 1);
+    const lines = [
+      `${sym} liquidation heatmap — Model ${m.model} ${m.mode} mode, ${m.range} window, ${ov.columnMinutes}m columns (Coinglass estimates)`,
+      `price ${ov.lastPrice}${ov.chgPct24h === null || ov.chgPct24h === undefined ? "" : ` (${ov.chgPct24h >= 0 ? "+" : ""}${ov.chgPct24h}% 24h)`} · open liq levels ${fmtUsd(ov.total)}: longs below ${fmtUsd(ov.longs)} (${Math.round(pct(ov.longs))}%) · shorts above ${fmtUsd(ov.shorts)} (${Math.round(pct(ov.shorts))}%)`,
+      `largest single level ${fmtUsd(ov.largestLevel)} · price step ${Number(ov.priceStep).toFixed(2)} · instrument ${d.instrument ?? m.symbol}`,
+      `key levels ABOVE (short liq — pullback resistance / squeeze fuel):`,
+      ...m.keyLevels.above.map((k) => `  ${fmtUsd(k.usd)} @ ${k.price} (+${(((k.price - ov.lastPrice) / ov.lastPrice) * 100).toFixed(2)}%)`),
+      `key levels BELOW (long liq — pullback magnets along the trend):`,
+      ...m.keyLevels.below.map((k) => `  ${fmtUsd(k.usd)} @ ${k.price} (${(((k.price - ov.lastPrice) / ov.lastPrice) * 100).toFixed(2)}%)`),
+    ];
+    return {
+      text: lines.join("\n"),
+      data: {
+        sym,
+        model: m.model,
+        mode: m.mode,
+        range: m.range,
+        lastPrice: ov.lastPrice,
+        overview: ov,
+        keyLevels: m.keyLevels,
+        window: d.window,
+      },
+    };
+  }
+
   const lines = [
     `${sym} liquidation heatmap (24h window @ 5m bars, ${m.totals?.rows ?? 0} priced rows${endQ ? ", historical" : ""}) — price ${m.lastPrice}`,
     `est. resting liq exposure: ${fmtUsd(m.totals?.below)} below (longs) · ${fmtUsd(m.totals?.above)} above (shorts)`,
@@ -1000,10 +1039,17 @@ const TOOLS = [
   },
   {
     name: "stopmap",
-    description: "BTC liquidation heatmap (stops map): the 24h estimated leveraged-position exposure grid — strongest clusters above/below (sweep magnets), distance bands and totals. Anonymous API is BTC-only; pass endTime (unix sec, up to 30 days back) for historical windows.",
+    description:
+      "Liquidation heatmap (stops map) — the CURRENT Coinglass /LiquidationHeatMap page: Model 1/2/3 grids with Pair (Binance venue) or Coin (all venues aggregated) mode over 12h..2y ranges. Returns the page's key liquidation levels above/below (sweep magnets for pullback entries along the trend) and the market overview (open longs/shorts, total, largest level). Default: model 1, coin mode, 24h. Legacy form (sym only) serves the BTC 24h grid; endTime pages ~30d of history (BTC only).",
     inputSchema: {
       type: "object",
-      properties: { sym: { type: "string", description: "BTC only (upstream limitation)" }, endTime: { type: "number", description: "Unix seconds — historical 24h window" } },
+      properties: {
+        sym: { type: "string", description: "any curated perp (XAU, BTC, ETH…) in model/mode/range form; legacy form is BTC-only" },
+        model: { type: "string", enum: ["1", "2", "3"], description: "Coinglass model tab (default 1)" },
+        mode: { type: "string", enum: ["coin", "pair"], description: "coin = all venues aggregated (default), pair = Binance venue" },
+        range: { type: "string", enum: ["12h", "24h", "48h", "3d", "7d", "14d", "30d", "90d", "180d", "1y", "2y"], description: "window (default 24h; 180d+ need a paid Coinglass grade)" },
+        endTime: { type: "number", description: "Unix seconds — legacy BTC 24h historical window (up to 30 days back)" },
+      },
       required: ["sym"],
     },
     handler: toolStopmap,

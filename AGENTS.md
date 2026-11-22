@@ -30,7 +30,7 @@ are multi-exchange aggregates with Binance as the lead.
 | `whale_orders` | resting whale orders per exchange, aggregate bid/ask walls + imbalance |
 | `book_walls` | order-book walls: depth/imbalance (now vs 5m ago), confirmed wall list with age + touched state, add/fill/pull events. Params: `market`, `interval`, `limit`, `band`, `endTime` (30-day history) |
 | `cvd_state` | perp/spot CVD, taker buy share, active divergences. Params: `mode`, `itv` (1m–1d), `limit`, `anchor` (all/day/week) |
-| `stopmap` | BTC liquidation heatmap: 24h exposure grid, strongest clusters above/below, distance bands. `endTime` = historical window (BTC-only — upstream limitation) |
+| `stopmap` | Liquidation heatmap — the CURRENT Coinglass page: Model 1/2/3, `mode=coin` (all venues) / `pair` (Binance), `range` 12h..2y. Returns the page's key liquidation levels above/below + market overview (open longs/shorts, largest level). Legacy `sym`-only form = BTC 24h grid; `endTime` pages ~30d history. Coin mode for non-BTC needs `CG_SESSION` in `.env` (renew: `node scripts/cg-session.mjs`) |
 | `footprint` | aggregated order-flow bars: per-bar taker buy/sell USD, delta %, POC. Params: `interval`, `limit`, `last` |
 | `large_orders` | large resting orders AND executed large trades per instrument: resting bid/ask walls, executed notional split. Params: `symbol`, `hours`, `interval` |
 | `kline_series` | raw candles or open-interest rows for any instrument key (type `kline`\|`oi`, any interval, ≤1000 rows) |
@@ -62,8 +62,11 @@ complete coverage or authorize an order.
 
 - Every number you quote must come from a tool response in this session.
 - Liquidation/whale figures are Coinglass *estimates* — label them as such.
-- XAU/XAG have no Hyperliquid venue and no anonymous stopmap — if a tool
-  errors for them, report the limitation, do not guess.
+- XAU/XAG have no Hyperliquid venue. Their Model 1 heatmaps (and every
+  non-BTC symbol) need the `CG_SESSION` web session in `.env`; without it the
+  anonymous upstream serves BTC pair 24h only (code 40000) and the stopmap
+  falls back to the badged rolling liq-snapshot construction. 180d/1y/2y
+  ranges need a paid Coinglass grade (40003) — report, do not guess.
 - If two tools disagree, prefer the more recent `updatedAt` and say so.
 
 ## REAL-TIME architecture (the live ladder)
