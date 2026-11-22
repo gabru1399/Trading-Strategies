@@ -199,7 +199,7 @@ def sec_cvd(base: str, sym: str) -> dict[str, Any]:
     if not d.get("ok"):
         return {"error": d.get("error", "not ok")}
     out = {k: d.get(k) for k in ("sym", "itv", "mode", "anchor", "instruments", "n",
-                                  "activeDivergences", "updatedAt")
+                                  "divergences", "kpis", "activeDivergences", "updatedAt")
            if d.get(k) is not None}
     # candles/perp/spot come back at engine length (300) regardless of the
     # requested limit — keep only the last CVD_BARS rows so the dump stays lean
