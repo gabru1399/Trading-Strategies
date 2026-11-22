@@ -19746,3 +19746,22 @@ analysis script rc=139
 
 analysis script rc=1
 
+## R823 · 2026-11-22 15:05 UTC · GLM auditor (near-miss calibration + audit closure + interlock formalization)
+
+**Market**: BTC 60,955  ETH 1,709.8  SOL 70.5  XAU 3,567.3 — weekend Value-Area consolidation continues (2nd consecutive full-universe scan: 0 A-grade, 0 B-grade)
+
+### Near-miss calibration tracker (answering "are the playbook thresholds too tight?")
+- New capture layer in `scripts/trading/batch_formulate_playbook.py`: every NO-TRADE with confluence ≥ 3/10 gets hypothetical §5 levels (entry/stop/T1/T2) and is appended to `data/near_miss/candidates.jsonl` (dedup on sym+dir+entry+stop until resolved; resolved ids freed from `data/near_miss/resolved.jsonl`)
+- New resolver `scripts/trading/near_miss_resolver.py`: after 4h horizon, walks terminal 5m klines (same data path as dumps) and classifies WIN2 / STOP-AFTER-T1 / LOSS / OPEN with **pessimistic same-candle stop-first** assumption; verdict per bucket only at n ≥ 30 — no rule changes from small samples
+- Synthetic unit checks passed: WIN2 +2.0R, LOSS −1.0R, STOP-AFTER-T1 0.0R, OPEN mark-to-market, short mirror
+- First cohort captured 15:01 UTC: **13 candidates** (all bucket-3, all long — LINK UNI ETC OP VET 1000PEPE XAU NVDA SOXL GOOGL META MSFT CRCL), first resolution ~19:00 UTC
+- Report: `desk/NEAR_MISS_CALIBRATION.md` (+ copy in download/). Policy: EDGE REJECTED at scale → thresholds confirmed; EDGE SUPPORTED → paper-test B-grade-at-4 before any live change (Kaizen amendment chain)
+
+### Full-universe re-scan (15:01 UTC, 58 perps, with tracker)
+- 0 A-grade / 0 B-grade / 58 NO-TRADE — consistent with the 14:39 scan; broad `long_only` (weekend consolidation, no fresh strikes, no CVD divergences)
+
+### Audit closure — VERIFIED
+- `CRO_Kaizen_Audit_Report_2026-11-22_CLOSURE.docx/.pdf` text-verified: Section 5 = "Delta Exchange India CLOB Audit — VERIFIED (Closure)"; Table 1 pre-flight rows 1–5 all DONE—VERIFIED (row 4 daemon heartbeat precision-marked VERIFIED-BY-OPERATOR by design); Table 2 venue evidence ledger rows 1–11 VERIFIED. Delta tickets #1705543437/#1701174054, MT5 tickets #20388131/#20388144, EA isolation #20372436, wallet $1.644 equity — all corroborated against the closure submission arithmetic
+
+### Interlock formalization — DONE
+- `desk/PRE_TRADE_INTERLOCK_RULE.md` (adopted 13:57 UTC) now wired into governance: canonical spec PART V gains **SECTION 11B [ILK-01] PRE-TRADE INTERLOCK ASSERTION** — blocking precondition on every venue batch, mandatory `desk/events/interlock_*.json` failure record, §3 canary re-arm, UNVERIFIED-BY-AGENT honesty clause, one-cycle register sync

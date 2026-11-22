@@ -1197,6 +1197,13 @@ Table 7 Score : <pts> / 11.5 | Grade: <A/B/NO_TRADE> | Action: <EXECUTE / REJECT
 
 *Sizing, order handling, venue constraints and the pitfalls ledger. Sections: S16, S11, S20, S19.*
 
+## SECTION 11B. PRE-TRADE INTERLOCK ASSERTION (STANDING RULE)
+<a id="sec-11b"></a>
+
+> **Section card** — **Purpose:** Blocking venue-interlock precondition on every order batch. · **Round step:** Steps 6, 8 · **Must output:** Interlock assertion TRUE (or HALT + event record) before any submission.
+
+> **[ILK-01] [INVARIANT] [PRE-TRADE INTERLOCK ASSERTION]:** Before ANY order submission batch on any venue, the executor MUST assert the venue's client-side trading interlock and HALT on failure: Blueberry MT5 (#5126976) requires `mt5.terminal_info().trade_allowed == True` (physical "Algo Trading" button GREEN); Delta Exchange India requires an authenticated API reach + wallet-balance read success (credential/2FA interlock). A failed assertion is a blocking precondition, not a warning — no new, modify or cancel order may be attempted while an interlock is red. Every failure MUST be persisted to `desk/events/interlock_YYYYMMDD_HHMMSS.json` (ts, host, venue, probe, value, retcode_observed, suppressed batch ids) BEFORE paging the operator, then re-armed per the rule's §3 canary procedure (minimum risk tier, playbook-grade setup, `retcode == 10009` confirmed by readback). Venue probes the agent cannot run itself are recorded `UNVERIFIED-BY-AGENT` with the operator's assertion quoted verbatim and dated — silently skipping an unauditable probe is a process violation. Every venue action MUST sync to `desk/state.json` and the `desk/log.md` round entry within one desk cycle. **Authoritative policy: `desk/PRE_TRADE_INTERLOCK_RULE.md`** (adopted 2026-11-22 per CRO Kaizen audit closure; amendment requires a logged Kaizen round with root-cause justification). Empirical root cause: the 2026-11-22 retcode 10027 incident (AutoTrading disabled by client) produced orders with zero on-disk failure record.
+
 ## SECTION 16. THE 1.0% RISK BUDGET, $\ge 2.0\text{R}$ HURDLE & TRANCHE TRAILING STOP PROTOCOL
 <a id="sec-16"></a>
 
