@@ -2140,3 +2140,6 @@
    - `PAXGUSD` maker limit short `#1703173525` is ALREADY active on Delta Exchange India CLOB @ `3,605.00` (SL `3,645.00`, TP `3,475.00`).
 4. **Git Sync**:
    - All remotes (`origin`, `fork`, `singhkaranbir`) verified 100% byte-for-byte replica at `main` tip.
+
+## 2026-11-22 01:58 UTC — ALERT A5 — position-close
+- BELL + WAKE: BTC position closed — capture close price + PnL for desk/log.md
