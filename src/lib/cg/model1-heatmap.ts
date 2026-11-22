@@ -98,6 +98,10 @@ export interface HeatmapOverview {
   /** page's "column period" in minutes (5/15/30/120…) */
   columnMinutes: number;
   chgPct24h: number | null;
+  /** "Liquidated in 24h" — realized (swept) liqs, coin-mode aggregate from
+   * /api/index/liquidation24h (pair mode: that endpoint serves coin
+   * aggregates only, so it reads 0/0 → null) */
+  liq24h: { long: number; short: number } | null;
 }
 
 export interface Model1Heatmap {
@@ -198,7 +202,26 @@ export async function fetchModel1Heatmap(opts: {
     code?: string;
     msg?: string;
   };
-  const model1 = buildModel1(payload, { model, mode, range, sym, symbol });
+  // "Liquidated in 24h" (coin mode only): /api/index/liquidation24h serves
+  // coin aggregates (pair-prefixed symbols read long=short=0 — live-probed
+  // 2026-11-22). Short-TTL cached; failures are non-fatal (panel shows —).
+  let liq24h: { long: number; short: number } | undefined;
+  if (mode === "coin") {
+    try {
+      const r = (await cgGet(
+        `/api/index/liquidation24h?${new URLSearchParams({ symbol: sym, data: makeObeToken() }).toString()}`,
+        60_000,
+        FAPI
+      )) as { long?: number; short?: number };
+      if (Number.isFinite(Number(r?.long)) && Number.isFinite(Number(r?.short))) {
+        liq24h = { long: Number(r.long), short: Number(r.short) };
+      }
+    } catch {
+      /* panel stays null — the heatmap itself is unaffected */
+    }
+  }
+
+  const model1 = buildModel1(payload, { model, mode, range, sym, symbol, liq24h });
   cache.set(ck, { at: Date.now(), model: model1 });
   return model1;
 }
@@ -209,7 +232,7 @@ export async function fetchModel1Heatmap(opts: {
 
 export function buildModel1(
   p: LiqHeatmapPayload,
-  meta: { model: HeatmapModelId; mode: HeatmapMode; range: string; sym: string; symbol: string }
+  meta: { model: HeatmapModelId; mode: HeatmapMode; range: string; sym: string; symbol: string; liq24h?: { long: number; short: number } }
 ): Model1Heatmap {
   if (!p || !Array.isArray(p.prices) || !Array.isArray(p.y) || !Array.isArray(p.liq)) {
     throw new HeatmapUpstreamError("empty", "upstream returned no heatmap grid");
@@ -289,11 +312,15 @@ export function buildModel1(
   }
   peaks.sort((a, b) => b.value - a.value);
   const lastPrice = close[cols - 1];
+  // Coinglass panel params (verified against the live page's "Key
+  // liquidation levels" panel, 2026-11-22): 8 rows per side, dedup within
+  // 2 grid bins (the panel's clustered look — consecutive maxima of one
+  // wall collapse into its strongest row).
   const above: HeatmapKeyLevel[] = [];
   const below: HeatmapKeyLevel[] = [];
   for (const pk of peaks) {
     const side = pk.price > lastPrice ? above : below;
-    if (side.length >= 4 || side.some((q) => Math.abs(q.price - pk.price) < 3 * bin)) continue;
+    if (side.length >= 8 || side.some((q) => Math.abs(q.price - pk.price) < 2 * bin)) continue;
     side.push({ price: pk.price, usd: pk.value });
   }
   above.sort((a, b) => a.price - b.price);
@@ -309,6 +336,10 @@ export function buildModel1(
   // 24h change reference: i = round(1440/dt) bars back, clamped
   const back = Math.min(cols - 1, Math.round(1440 / columnMinutes));
   const chgPct24h = back < cols ? (lastPrice / close[cols - 1 - back] - 1) * 100 : null;
+  // "Liquidated in 24h" — attached by the route (coin mode only: the
+  // endpoint serves coin aggregates; pair requests read long=short=0)
+  const liq24h: { long: number; short: number } | null =
+    meta.liq24h && (meta.liq24h.long > 0 || meta.liq24h.short > 0) ? meta.liq24h : null;
 
   // ---- eu(): cumulative swept-from-price curves ----
   const refRow = Math.min(nY - 1, Math.max(0, Math.floor((lastPrice - yAxis[0]) / bin)));
@@ -352,6 +383,7 @@ export function buildModel1(
       priceStep: bin,
       columnMinutes,
       chgPct24h: chgPct24h === null ? null : Number(chgPct24h.toFixed(2)),
+      liq24h,
     },
     cumulative,
     liqRows: p.liq.length,

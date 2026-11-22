@@ -65,7 +65,9 @@ function fmtM(n: number): string {
 export default function LiquidationLevelsTool({ sym = "BTC" }: { sym?: string }) {
   const [range, setRange] = useState<string>("3d");
   const [windowPct, setWindowPct] = useState<number>(4);
-  const [tab, setTab] = useState<"levels" | "stops">("levels");
+  // default "stops" — the Coinglass Liquidation-HeatMap page (Model 1/2/3,
+  // coin/pair, 12h..2y) is the primary view for pullback entries
+  const [tab, setTab] = useState<"levels" | "stops">("stops");
 
   const liqQ = usePolling<LiqResponse>(tab === "levels" ? `/api/cg/liqlevels?sym=${sym}&range=${range}&lvR=${windowPct}` : null, 30_000);
   // defense-in-depth: never render stats that belong to another symbol
@@ -115,16 +117,16 @@ export default function LiquidationLevelsTool({ sym = "BTC" }: { sym?: string })
         </div>
         <div className="flex overflow-hidden rounded border border-neutral-700">
           <button
+            onClick={() => setTab("stops")}
+            className={`px-3 py-1 text-xs ${tab === "stops" ? "bg-neutral-700 text-white" : "text-neutral-400 hover:bg-neutral-800"}`}
+          >
+            Heatmap · Model 1/2/3
+          </button>
+          <button
             onClick={() => setTab("levels")}
             className={`px-3 py-1 text-xs ${tab === "levels" ? "bg-neutral-700 text-white" : "text-neutral-400 hover:bg-neutral-800"}`}
           >
             Levels 3D/7D/30D
-          </button>
-          <button
-            onClick={() => setTab("stops")}
-            className={`px-3 py-1 text-xs ${tab === "stops" ? "bg-neutral-700 text-white" : "text-neutral-400 hover:bg-neutral-800"}`}
-          >
-            Stops heatmap 24h
           </button>
         </div>
         {tab === "levels" && (

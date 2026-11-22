@@ -2,23 +2,37 @@
 
 import { useMemo, useState } from "react";
 import { usePolling } from "./use-cg-data";
-import StopmapCanvas from "./charts/stopmap-canvas";
-import { assetOf } from "@/lib/cg/assets";
+import CoinglassHeatmapTable, { type DetailLevel } from "./charts/coinglass-heatmap-table";
+import { COLORSCHEME_IDS, COLORSCHEMES, fmtUsd } from "./charts/heatmap-colormaps";
 
 /**
- * Stops (liquidation heatmap) — the CURRENT Coinglass /LiquidationHeatMap
- * page (Model 1/2/3 tabs, Pair/Coin toggle, 12h..2y ranges):
- *  - Model 1 = the classic leverage-exposure grid (default, what the
- *    operator asked to add for pullback entries along the trend)
- *  - Coin mode = ALL venues aggregated under the plain symbol (default)
- *  - Pair mode = the Binance execution venue only
- * Key-liquidation-levels and Market-overview panels follow the page's exact
- * math (last-column local maxima; verified 1:1 against the live page).
- * The legacy 24h/5m BTC view remains as the "24h" range of the same grid.
+ * Liquidation HeatMap — the CURRENT Coinglass /LiquidationHeatMap page,
+ * rebuilt panel-for-panel as a DOM table grid (operator request 2026-11-22:
+ * rows = price levels, columns = time buckets, cell background = heat):
+ *
+ *   ┌ controls ─────────────────────────────────────────────────────┐
+ *   │ Model 1|2|3 · Coin|Pair · Range ▾ · Colours ▾ · Intensity ▾   │
+ *   │ Detail low|mid|high|full · Values ☐ · Close path ☐            │
+ *   ├ table grid (heat cells + Σ-row column) ┬─────┬ overview ──────┤
+ *   │                                        │     │ key levels     │
+ *   └────────────────────────────────────────┴─────┴────────────────┘
+ *
+ *  - Coin mode = ALL exchanges aggregated (default); Pair = Binance
+ *  - Key liquidation levels: top-8 clusters/side with distance % (page panel)
+ *  - Market overview: open levels, longs/shorts split, liquidated in 24h,
+ *    largest level, price step / column period
+ *  - Data: /api/cg/stopmap?model=&mode=&range= — needs CG_SESSION in .env
+ *    (the anonymous Coinglass API serves BTC pair 24h only)
  */
 
 const RANGES = ["12h", "24h", "48h", "3d", "7d", "14d", "30d", "90d", "180d", "1y", "2y"] as const;
 const MODELS = ["1", "2", "3"] as const;
+const DETAILS: { v: DetailLevel; l: string }[] = [
+  { v: "low", l: "Low" },
+  { v: "mid", l: "Mid" },
+  { v: "high", l: "High" },
+  { v: "full", l: "Full" },
+];
 
 interface Model1Response {
   ok: boolean;
@@ -28,18 +42,21 @@ interface Model1Response {
   sym: string;
   symbol?: string;
   instrument?: string;
-  window?: { interval: string; bars: number; from: number; to: number };
   source?: string;
   stale?: boolean;
+  window?: { interval: string; bars: number; from: number; to: number };
   model?: {
     model: string;
     mode: "coin" | "pair";
     range: string;
     symbol?: string;
-    keyLevels: {
-      above: { price: number; usd: number }[];
-      below: { price: number; usd: number }[];
-    };
+    updateTime: number;
+    precision: number;
+    yAxis: number[];
+    columns: { ts: number; cells: [number, number][] }[];
+    candles: { ts: number; o: number; h: number; l: number; c: number }[];
+    lastColumn: number[];
+    keyLevels: { above: { price: number; usd: number }[]; below: { price: number; usd: number }[] };
     overview: {
       lastPrice: number;
       longs: number;
@@ -49,39 +66,29 @@ interface Model1Response {
       priceStep: number;
       columnMinutes: number;
       chgPct24h: number | null;
+      liq24h: { long: number; short: number } | null;
     };
-    yAxis: number[];
-    columns: { ts: number; cells: [number, number][] }[];
-    profile: number[];
-    lastColumn: number[];
-    candles: { ts: number; o: number; h: number; l: number; c: number }[];
     liqRows: number;
-    cumulative: { price: number; below: number; above: number }[];
   };
-  // legacy BTC/rolling shape (stopmap fallback) — rendered by the old path
-  lastPrice?: number;
-  clusters?: {
-    below: { price: number; usd: number; distPct: number; strength: number }[];
-    above: { price: number; usd: number; distPct: number; strength: number }[];
-  };
-  totals?: { below: number; above: number; all: number; rows: number };
-  bands?: { a: number; b: number; below: number; above: number }[];
-  grid?: { ts: number; cells: [number, number][] }[];
-  y?: number[];
 }
 
-function fmtB(n: number): string {
-  const a = Math.abs(n);
-  if (a >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
-  if (a >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
-  if (a >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
-  return n.toFixed(0);
+/** price decimals from magnitude (page precision is per-instrument) */
+function priceDecs(p: number): number {
+  if (p >= 1000) return 2;
+  if (p >= 10) return 2;
+  if (p >= 1) return 3;
+  return 6;
 }
 
 export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
   const [model, setModel] = useState<(typeof MODELS)[number]>("1");
   const [mode, setMode] = useState<"coin" | "pair">("coin");
   const [range, setRange] = useState<string>("3d");
+  const [colours, setColours] = useState<string>("viridis");
+  const [intensity, setIntensity] = useState<number>(0);
+  const [detail, setDetail] = useState<DetailLevel>("mid");
+  const [showCandles, setShowCandles] = useState(true);
+  const [showValues, setShowValues] = useState(false);
 
   const q = usePolling<Model1Response>(
     `/api/cg/stopmap?sym=${sym}&model=${model}&mode=${mode}&range=${range}`,
@@ -89,42 +96,56 @@ export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
   );
   // defense-in-depth: never render a model that belongs to another symbol
   const m = q.data && q.data.sym === sym ? q.data.model : undefined;
-  const isModel1Shape = Boolean(m?.keyLevels && m?.overview);
-  const decs = assetOf(sym)?.priceDecs ?? 2;
+  const isModel1Shape = Boolean(m?.keyLevels && m?.overview && m?.yAxis);
+  const decs = useMemo(() => priceDecs(m?.overview?.lastPrice ?? 1000), [m]);
   const fmtP = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: decs, maximumFractionDigits: decs });
   const px = m?.overview?.lastPrice;
 
-  // strongest cluster either side for the magnet card
-  const magnet = useMemo(() => {
-    if (!m?.keyLevels) return null;
-    const all = [...m.keyLevels.above, ...m.keyLevels.below].sort((a, b) => b.usd - a.usd);
-    return all[0] ?? null;
-  }, [m]);
-
+  // ---- error / setup states ----
   if (!m || !isModel1Shape) {
+    const needsSession = /CG_SESSION|login|40000/.test(q.error ?? "");
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-center text-sm text-neutral-400">
-        <div>{q.loading ? `Loading Model ${model} ${range} heatmap…` : q.error ? `Stops data error: ${q.error}` : q.data?.reason || q.data?.error || "No data"}</div>
-        <div className="text-xs text-neutral-500">
-          {(q.data?.source ?? "").startsWith("coinglass:") ? "" : "Coin-mode heatmaps need CG_SESSION (see scripts/research/cg_login.mjs); BTC pair 24h works anonymously."}
-        </div>
+      <div className="flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-400">
+        <div className="text-4xl">🌡️</div>
+        {q.loading ? (
+          <div>Loading Model {model} {range} heatmap…</div>
+        ) : needsSession ? (
+          <>
+            <div className="font-medium text-neutral-200">Coinglass login needed for {sym} heatmaps</div>
+            <div className="max-w-lg text-xs leading-relaxed text-neutral-500">
+              The anonymous Coinglass API serves BTC pair 24h only; every other symbol needs your web
+              session. One-time local setup:
+            </div>
+            <code className="rounded bg-neutral-800 px-3 py-1.5 text-[11px] text-emerald-300">
+              CG_USER=you@example.com CG_PASS=yourpass node scripts/cg-session.mjs
+            </code>
+            <div className="text-xs text-neutral-500">then restart the terminal (npm run dev)</div>
+          </>
+        ) : (
+          <div>{q.error ? `Heatmap error: ${q.error}` : q.data?.reason || q.data?.error || "No data"}</div>
+        )}
+        {q.data?.source && !q.data?.source.includes("coinglass") && (
+          <div className="text-[11px] text-neutral-600">source: {q.data.source}</div>
+        )}
       </div>
     );
   }
 
   const ov = m.overview;
-  const lvl = (price: number, usd: number, side: "above" | "below") => {
+
+  // key-level row (page: price · size · from-price % · strength bar)
+  const levelRow = (price: number, usd: number, side: "above" | "below") => {
     const distPct = px ? ((price - px) / px) * 100 : 0;
-    const strength = ov.largestLevel > 0 ? (usd / ov.largestLevel) * 100 : 0;
+    const strength = ov.largestLevel > 0 ? Math.min(100, (usd / ov.largestLevel) * 100) : 0;
     return (
       <tr key={`${side}-${price}`} className="border-t border-neutral-800/40">
         <td className="py-1 font-mono text-neutral-200">{fmtP(price)}</td>
-        <td className={`py-1 text-right font-mono ${side === "above" ? "text-red-400/80" : "text-emerald-400/80"}`}>
+        <td className={`py-1 text-right font-mono ${side === "above" ? "text-red-400/90" : "text-emerald-400/90"}`}>
           {side === "above" ? "+" : ""}{distPct.toFixed(2)}%
         </td>
-        <td className="py-1 text-right font-mono text-neutral-300">${fmtB(usd)}</td>
+        <td className="py-1 text-right font-mono text-neutral-200">{fmtUsd(usd)}</td>
         <td className="py-1 pl-2">
-          <div className="h-2 w-full overflow-hidden rounded bg-neutral-800">
+          <div className="h-1.5 w-full overflow-hidden rounded bg-neutral-800">
             <div className={`h-full ${side === "above" ? "bg-red-500/80" : "bg-emerald-500/80"}`} style={{ width: `${strength}%` }} />
           </div>
         </td>
@@ -132,11 +153,13 @@ export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
     );
   };
 
+  const updated = m.updateTime ? new Date(m.updateTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—";
+
   return (
     <div className="flex flex-col gap-3">
-      {/* controls — the live page's selector row */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex overflow-hidden rounded-md border border-neutral-800 text-xs">
+      {/* ---- controls row (the page's selector strip) ---- */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
+        <div className="flex overflow-hidden rounded-md border border-neutral-700 text-xs">
           {MODELS.map((v) => (
             <button
               key={v}
@@ -147,143 +170,207 @@ export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
             </button>
           ))}
         </div>
-        <div className="flex overflow-hidden rounded-md border border-neutral-800 text-xs">
+        <div className="flex overflow-hidden rounded-md border border-neutral-700 text-xs">
           {(["coin", "pair"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setMode(v)}
+              title={v === "coin" ? "All exchanges aggregated" : "Binance execution venue"}
               className={`px-2.5 py-1 capitalize ${mode === v ? "bg-neutral-100 font-medium text-neutral-900" : "bg-neutral-900 text-neutral-400 hover:text-neutral-200"}`}
             >
               {v}
             </button>
           ))}
         </div>
-        <select
-          value={range}
-          onChange={(e) => setRange(e.target.value)}
-          className="rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1 text-xs text-neutral-300"
-        >
-          {RANGES.map((r) => (
-            <option key={r} value={r}>{r}</option>
+        <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+          Range
+          <select
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-1.5 py-1 text-xs text-neutral-200"
+          >
+            {RANGES.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+          Colours
+          <select
+            value={colours}
+            onChange={(e) => setColours(e.target.value)}
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-1.5 py-1 text-xs text-neutral-200"
+          >
+            {COLORSCHEME_IDS.map((id) => (
+              <option key={id} value={id}>{COLORSCHEMES[id].label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+          Intensity
+          <input
+            type="range"
+            min={0}
+            max={90}
+            step={5}
+            value={intensity * 100}
+            onChange={(e) => setIntensity(Number(e.target.value) / 100)}
+            className="h-1 w-24 accent-emerald-400"
+          />
+          <span className="w-8 font-mono text-[10px] text-neutral-500">≥{intensity * 100}%</span>
+        </label>
+        <div className="flex overflow-hidden rounded-md border border-neutral-700 text-xs">
+          {DETAILS.map((d) => (
+            <button
+              key={d.v}
+              onClick={() => setDetail(d.v)}
+              title={`~${d.v === "low" ? "24 price rows × 36 time cols" : d.v === "mid" ? "48 × 72" : d.v === "high" ? "96 × 144" : "every raw bin"} grid`}
+              className={`px-2 py-1 ${detail === d.v ? "bg-neutral-100 font-medium text-neutral-900" : "bg-neutral-900 text-neutral-400 hover:text-neutral-200"}`}
+            >
+              {d.l}
+            </button>
           ))}
-        </select>
-        <span className="text-[10px] text-neutral-500">
-          {q.data?.stale ? "stale" : q.data?.source?.includes("session") ? "live · session" : "live"} · {ov.columnMinutes}m columns · step {ov.priceStep.toFixed(2)}
+        </div>
+        <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+          <input type="checkbox" checked={showValues} onChange={(e) => setShowValues(e.target.checked)} className="accent-emerald-400" />
+          Values
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+          <input type="checkbox" checked={showCandles} onChange={(e) => setShowCandles(e.target.checked)} className="accent-emerald-400" />
+          Close path
+        </label>
+        <span className="ml-auto flex items-center gap-2 text-[10px] text-neutral-500">
+          <span className={`inline-block h-1.5 w-1.5 rounded-full ${q.data?.stale ? "bg-amber-400" : "bg-emerald-400"}`} />
+          Updated {updated} · {mode === "coin" ? "all venues" : "Binance"} · {q.data?.instrument ?? m.symbol}
         </span>
       </div>
 
-      {/* market overview — the live page's right panel */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-neutral-500">Last price</div>
-          <div className="mt-0.5 font-mono text-sm font-semibold text-neutral-100">{fmtP(ov.lastPrice)}</div>
-          <div className="text-[10px] text-neutral-500">{ov.chgPct24h === null ? "" : `${ov.chgPct24h >= 0 ? "+" : ""}${ov.chgPct24h.toFixed(2)}% 24h`}</div>
+      {/* ---- table grid + right panels ---- */}
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/60 p-1.5">
+          <CoinglassHeatmapTable
+            model={{
+              yAxis: m.yAxis,
+              columns: m.columns,
+              candles: m.candles,
+              keyLevels: m.keyLevels,
+              lastPrice: ov.lastPrice,
+              priceStep: ov.priceStep,
+              columnMinutes: ov.columnMinutes,
+              updateTime: m.updateTime,
+            }}
+            colors={colours}
+            intensityMin={intensity}
+            detail={detail}
+            showCandles={showCandles}
+            showValues={showValues}
+            priceDecs={Math.min(2, decs)}
+          />
         </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-neutral-500">Open liq levels</div>
-          <div className="mt-0.5 font-mono text-sm font-semibold text-neutral-100">${fmtB(ov.total)}</div>
-          <div className="text-[10px] text-neutral-500">currently resting exposure</div>
-        </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-neutral-500">Longs below</div>
-          <div className="mt-0.5 font-mono text-sm font-semibold text-emerald-400">${fmtB(ov.longs)}</div>
-          <div className="text-[10px] text-neutral-500">{ov.total > 0 ? `${Math.round((ov.longs / ov.total) * 100)}%` : "—"}</div>
-        </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-neutral-500">Shorts above</div>
-          <div className="mt-0.5 font-mono text-sm font-semibold text-red-400">${fmtB(ov.shorts)}</div>
-          <div className="text-[10px] text-neutral-500">{ov.total > 0 ? `${Math.round((ov.shorts / ov.total) * 100)}%` : "—"}</div>
-        </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-neutral-500">Largest single level</div>
-          <div className="mt-0.5 font-mono text-sm font-semibold text-neutral-100">${fmtB(ov.largestLevel)}</div>
-          <div className="text-[10px] text-neutral-500">{fmtB(m.liqRows)} heat cells</div>
-        </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-neutral-500">Sweep magnet</div>
-          <div className="mt-0.5 font-mono text-sm font-semibold text-neutral-100">{magnet ? fmtP(magnet.price) : "—"}</div>
-          <div className="text-[10px] text-neutral-500">{magnet ? `$${fmtB(magnet.usd)} cluster` : ""}</div>
-        </div>
-      </div>
 
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-2">
-        <StopmapCanvas
-          model={{
-            candles: m.candles,
-            y: m.yAxis,
-            grid: m.columns,
-            profile: m.profile,
-            lastPrice: ov.lastPrice,
-            clusters: {
-              below: m.keyLevels.below.map((k) => ({
-                price: k.price,
-                usd: k.usd,
-                distPct: px ? ((k.price - px) / px) * 100 : 0,
-              })),
-              above: m.keyLevels.above.map((k) => ({
-                price: k.price,
-                usd: k.usd,
-                distPct: px ? ((k.price - px) / px) * 100 : 0,
-              })),
-            },
-          }}
-          height={380}
-          priceDecs={decs}
-        />
-      </div>
-
-      {/* key liquidation levels — the live page's right panel */}
-      <div className="grid gap-3 xl:grid-cols-2">
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3">
-          <h3 className="mb-2 text-sm font-semibold text-neutral-100">
-            🔴 Above — short liquidations <span className="text-[11px] font-normal text-neutral-500">pullback resistance / squeeze fuel</span>
-          </h3>
-          <table className="w-full text-[11px]">
-            <thead className="text-neutral-500">
-              <tr>
-                <th className="py-1 text-left font-medium">Price</th>
-                <th className="py-1 text-right font-medium">From price</th>
-                <th className="py-1 text-right font-medium">Liq size</th>
-                <th className="py-1 pl-2 text-left font-medium">Strength</th>
-              </tr>
-            </thead>
-            <tbody>
-              {m.keyLevels.above.map((k) => lvl(k.price, k.usd, "above"))}
-              {!m.keyLevels.above.length && (
-                <tr><td colSpan={4} className="py-4 text-center text-neutral-600">No clusters above.</td></tr>
+        <div className="flex flex-col gap-3">
+          {/* Market overview — the page's right panel */}
+          <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Market overview</h3>
+            <dl className="space-y-1.5 text-[11px]">
+              <div className="flex justify-between">
+                <dt className="text-neutral-500">Price</dt>
+                <dd className="font-mono text-neutral-100">
+                  {fmtP(ov.lastPrice)}
+                  {ov.chgPct24h !== null && (
+                    <span className={ov.chgPct24h >= 0 ? " text-emerald-400" : " text-red-400"}> {ov.chgPct24h >= 0 ? "+" : ""}{ov.chgPct24h}%</span>
+                  )}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-neutral-500">Open liquidation levels</dt>
+                <dd className="font-mono font-semibold text-neutral-100">{fmtUsd(ov.total)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-neutral-500">Longs (below price)</dt>
+                <dd className="font-mono text-emerald-400">
+                  {fmtUsd(ov.longs)} <span className="text-neutral-500">· {ov.total > 0 ? Math.round((ov.longs / ov.total) * 100) : 0}%</span>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-neutral-500">Shorts (above price)</dt>
+                <dd className="font-mono text-red-400">
+                  {fmtUsd(ov.shorts)} <span className="text-neutral-500">· {ov.total > 0 ? Math.round((ov.shorts / ov.total) * 100) : 0}%</span>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-neutral-500">Liquidated in 24h</dt>
+                <dd className="font-mono text-neutral-200">
+                  {ov.liq24h ? fmtUsd(ov.liq24h.long + ov.liq24h.short) : "—"}
+                </dd>
+              </div>
+              {ov.liq24h && (
+                <div className="flex justify-between">
+                  <dt className="pl-3 text-neutral-600">of which longs / shorts</dt>
+                  <dd className="font-mono text-[10px] text-neutral-400">
+                    {fmtUsd(ov.liq24h.long).slice(1)} / {fmtUsd(ov.liq24h.short).slice(1)}
+                  </dd>
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3">
-          <h3 className="mb-2 text-sm font-semibold text-neutral-100">
-            🟢 Below — long liquidations <span className="text-[11px] font-normal text-neutral-500">pullback magnets along the trend</span>
-          </h3>
-          <table className="w-full text-[11px]">
-            <thead className="text-neutral-500">
-              <tr>
-                <th className="py-1 text-left font-medium">Price</th>
-                <th className="py-1 text-right font-medium">From price</th>
-                <th className="py-1 text-right font-medium">Liq size</th>
-                <th className="py-1 pl-2 text-left font-medium">Strength</th>
-              </tr>
-            </thead>
-            <tbody>
-              {m.keyLevels.below.map((k) => lvl(k.price, k.usd, "below"))}
-              {!m.keyLevels.below.length && (
-                <tr><td colSpan={4} className="py-4 text-center text-neutral-600">No clusters below.</td></tr>
-              )}
-            </tbody>
-          </table>
+              <div className="flex justify-between">
+                <dt className="text-neutral-500">Largest single level</dt>
+                <dd className="font-mono text-neutral-100">{fmtUsd(ov.largestLevel)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-neutral-500">Price step / column</dt>
+                <dd className="font-mono text-neutral-300">{ov.priceStep.toFixed(2)} / {ov.columnMinutes}m</dd>
+              </div>
+            </dl>
+            {/* long/short split bar */}
+            <div className="mt-2 flex h-1.5 overflow-hidden rounded bg-neutral-800">
+              <div className="bg-emerald-500/80" style={{ width: `${ov.total > 0 ? (ov.longs / ov.total) * 100 : 0}%` }} />
+              <div className="bg-red-500/80" style={{ width: `${ov.total > 0 ? (ov.shorts / ov.total) * 100 : 0}%` }} />
+            </div>
+            <div className="mt-1 flex justify-between text-[9px] text-neutral-500">
+              <span>longs {ov.total > 0 ? Math.round((ov.longs / ov.total) * 100) : 0}%</span>
+              <span>shorts {ov.total > 0 ? Math.round((ov.shorts / ov.total) * 100) : 0}%</span>
+            </div>
+          </div>
+
+          {/* Key liquidation levels — the page's right panel */}
+          <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Key liquidation levels</h3>
+              <span className="text-[10px] text-neutral-600">From price</span>
+            </div>
+
+            <div className="mb-1 text-[10px] font-medium text-red-400/90">🔴 Above — short liquidations</div>
+            <table className="mb-2 w-full text-[11px]">
+              <tbody>
+                {m.keyLevels.above.map((k) => levelRow(k.price, k.usd, "above"))}
+                {!m.keyLevels.above.length && (
+                  <tr><td colSpan={4} className="py-3 text-center text-neutral-600">No clusters above.</td></tr>
+                )}
+              </tbody>
+            </table>
+
+            <div className="mb-1 text-[10px] font-medium text-emerald-400/90">🟢 Below — long liquidations</div>
+            <table className="w-full text-[11px]">
+              <tbody>
+                {m.keyLevels.below.map((k) => levelRow(k.price, k.usd, "below"))}
+                {!m.keyLevels.below.length && (
+                  <tr><td colSpan={4} className="py-3 text-center text-neutral-600">No clusters below.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
+      {/* ---- reading guide ---- */}
       <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 px-3 py-2 text-[10px] leading-relaxed text-neutral-500">
-        Coinglass Model {m.model} estimates ({m.mode} mode · {m.range} window · {q.data?.instrument ?? m.symbol}): leveraged positions
-        that would be force-closed at each price — exchanges do not publish individual liquidation prices. Strong clusters are
-        liquidity magnets that <em>attract</em> sweeps; for pullback entries along the trend, watch the below-price magnets in an
-        uptrend (and above-price in a downtrend) as the zones price is drawn toward. Read together with the Levels tab
-        (position-open cohorts) and Book Walls (resting depth).
+        Coinglass Model {m.model} estimates ({m.mode} mode · {m.range} window · {m.liqRows.toLocaleString()} raw price bins): leveraged
+        positions that would be force-closed at each price — exchanges do not publish individual liquidation prices, so every
+        number is a Coinglass estimate. Table rows aggregate {m.overview.priceStep.toFixed(2)}-wide price bins; each cell&rsquo;s
+        colour shows that row·column&rsquo;s open liquidations (γ=0.7, page&rsquo;s Heat lens) and the right Σ column the row&rsquo;s
+        time-summed total. Bright clusters are liquidity magnets that <em>attract</em> sweeps. For pullback entries along the
+        trend: in an uptrend the below-price (green) rows are the zones price is drawn toward; above-price (red) rows cap
+        squeezes. The amber ▸ marks the current price row; the white dots are the candle-close path.
       </div>
     </div>
   );
