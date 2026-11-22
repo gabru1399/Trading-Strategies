@@ -337,6 +337,70 @@
       "expectedRiskUsd": 0.028,
       "status": "placed",
       "note": "M1 Trend Pullback / S10 Shelf Retest short limit, Grade A+ (9.5 pts), 0.875% equity risk, post-only maker, cold-zone SL 0.31140"
+    },
+    {
+      "ticket": 20388131,
+      "symbol": "SOL",
+      "pair": "SOLUSD.p",
+      "side": "buy",
+      "type": "BUY_LIMIT",
+      "qty": 0.03,
+      "price": 69.8,
+      "sl": 68.5,
+      "tp": 72.4,
+      "risk_usd": 3.9,
+      "r_multiple": 2.0,
+      "status": "placed-mt5",
+      "venue": "Blueberry-MT5",
+      "magic": 42001,
+      "comment": "cg_terminal:SOL"
+    },
+    {
+      "ticket": 20388144,
+      "symbol": "BTC",
+      "pair": "BTCUSD.pi",
+      "side": "buy",
+      "type": "BUY_LIMIT",
+      "qty": 0.01,
+      "price": 60300.0,
+      "sl": 59850.0,
+      "tp": 62400.0,
+      "risk_usd": 4.5,
+      "r_multiple": 4.67,
+      "status": "placed-mt5",
+      "venue": "Blueberry-MT5",
+      "magic": 42001,
+      "comment": "cg_terminal:BTC"
+    },
+    {
+      "ticket": 1705543437,
+      "symbol": "XRP",
+      "pair": "XRPUSD",
+      "side": "sell",
+      "type": "LIMIT",
+      "qty": 10,
+      "price": 0.931,
+      "sl": 0.9365,
+      "tp": 0.919,
+      "risk_usd": 0.055,
+      "r_multiple": 2.18,
+      "status": "placed",
+      "venue": "Delta_India",
+      "post_only": true,
+      "comment": "cg_terminal:XRP_maker"
+    },
+    {
+      "ticket": 1701174054,
+      "symbol": "ETH",
+      "pair": "ETHUSD",
+      "side": "buy",
+      "type": "STOP_LIMIT",
+      "qty": 1,
+      "price": 1536.15,
+      "stop_price": 1536.15,
+      "status": "placed",
+      "venue": "Delta_India",
+      "bracket_tp_for": 3136
     }
   ],
   "positions": [
@@ -371,6 +435,20 @@
       "tp": 60200.0,
       "status": "active",
       "fill_ts": 1795155180000
+    },
+    {
+      "product_symbol": "ETHUSD",
+      "product_id": 3136,
+      "size": -1,
+      "entry_price": 1665.0,
+      "mark_price": 1706.99,
+      "liquidation_price": 1731.45,
+      "margin": 0.706152,
+      "unrealized_pnl": -0.4215,
+      "status": "active",
+      "venue": "Delta_India",
+      "bracket_tp": 1536.15,
+      "updated_at": "2026-11-22T14:11:11Z"
     }
   ],
   "closed": [
@@ -11266,7 +11344,7 @@
       "withdrawReason": "debate lost (FOR 3/AGAINST 3) on fresh data"
     }
   ],
-  "updatedAt": "2026-11-20T17:05:47.546862+00:00",
+  "updatedAt": "2026-11-22T14:11:11Z",
   "closedPositions": [
     {
       "ticket": 210050569,
@@ -11307,7 +11385,22 @@
     "order_margin_blocked": 0,
     "concurrency_slots_occupied": 0,
     "concurrency_slots_available": 2,
-    "regime_stance": "100% CASH DEFENSE (WATCH_EXHAUSTION REGIME)"
+    "regime_stance": "100% CASH DEFENSE (WATCH_EXHAUSTION REGIME)",
+    "delta_india": {
+      "user_id": 26902927,
+      "balance_usd": 1.927633,
+      "available_balance_usd": 0.268706,
+      "position_margin_usd": 0.706152,
+      "order_margin_usd": 0.931,
+      "commission_usd": 0.021775,
+      "blocked_margin_usd": 1.658927,
+      "net_equity_usd": 1.627067,
+      "unrealized_pnl_usd": -0.4215,
+      "balance_inr": 163.85,
+      "available_inr": 22.84,
+      "wallet_reconciliation": "available (0.2687) + pos_margin (0.7061) + ord_margin (0.9310) + comm (0.0218) == 1.9276 gross balance; net_equity (1.6271) == balance + unrealized_pnl (-0.4215)",
+      "updated_at": "2026-11-22T14:11:11Z"
+    }
   },
   "quant_engine": {
     "last_scan_ts": 1794675825067,
