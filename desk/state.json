@@ -401,6 +401,42 @@
       "status": "placed",
       "venue": "Delta_India",
       "bracket_tp_for": 3136
+    },
+    {
+      "id": "DELTA-XRP-1705868028",
+      "sym": "XRP",
+      "venue": "Delta-India",
+      "ticket": 1705868028,
+      "side": "short",
+      "type": "limit",
+      "entry": 0.941,
+      "stop": 0.94452,
+      "targets": [
+        0.9066
+      ],
+      "contracts": 10,
+      "margin_usd": 0.941,
+      "status": "open",
+      "placed_at": "2026-11-22T15:58:14Z",
+      "note": "S0 counter-liquidation sweep short @ 0.9410 shelf (str 100), SL 0.94452, TP 0.9066 (9.79R), Table-7 10.75 A+"
+    },
+    {
+      "id": "DELTA-ADA-1705868424",
+      "sym": "ADA",
+      "venue": "Delta-India",
+      "ticket": 1705868424,
+      "side": "short",
+      "type": "limit",
+      "entry": 0.1487,
+      "stop": 0.14993,
+      "targets": [
+        0.1392
+      ],
+      "contracts": 20,
+      "margin_usd": 0.149,
+      "status": "open",
+      "placed_at": "2026-11-22T15:58:14Z",
+      "note": "S0 counter-liquidation sweep short @ 0.1487 shelf (str 100), SL 0.14993, TP 0.1392 (7.76R), Table-7 10.75 A+"
     }
   ],
   "positions": [
@@ -11344,7 +11380,7 @@
       "withdrawReason": "debate lost (FOR 3/AGAINST 3) on fresh data"
     }
   ],
-  "updatedAt": "2026-11-22T14:11:11Z",
+  "updatedAt": "2026-11-22T15:58:14Z",
   "closedPositions": [
     {
       "ticket": 210050569,
