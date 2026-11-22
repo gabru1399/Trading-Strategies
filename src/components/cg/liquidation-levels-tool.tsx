@@ -120,7 +120,7 @@ export default function LiquidationLevelsTool({ sym = "BTC" }: { sym?: string })
             onClick={() => setTab("stops")}
             className={`px-3 py-1 text-xs ${tab === "stops" ? "bg-neutral-700 text-white" : "text-neutral-400 hover:bg-neutral-800"}`}
           >
-            Heatmap · Model 1/2/3
+            Heatmap · Walls / Heat
           </button>
           <button
             onClick={() => setTab("levels")}

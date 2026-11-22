@@ -3,19 +3,27 @@
 import { useMemo, useState } from "react";
 import { usePolling } from "./use-cg-data";
 import CoinglassHeatmapTable, { type DetailLevel } from "./charts/coinglass-heatmap-table";
+import CoinglassWalls from "./charts/coinglass-walls";
 import { COLORSCHEME_IDS, COLORSCHEMES, fmtUsd } from "./charts/heatmap-colormaps";
 
 /**
  * Liquidation HeatMap — the CURRENT Coinglass /LiquidationHeatMap page,
- * rebuilt panel-for-panel as a DOM table grid (operator request 2026-11-22:
- * rows = price levels, columns = time buckets, cell background = heat):
+ * rebuilt panel-for-panel. Two lenses, like the page's Lens selector:
+ *
+ *   Walls — the classic wall view (operator request 2026-11-22): the top-24
+ *     liquidation clusters drawn as horizontal wall bars from when they
+ *     formed until swept, thickness/colour = size, price · $size labels at
+ *     the right end, faint heat wash behind, mono candles, max-callouts.
+ *     EXACT port of the page's buildWalls()/drawWalls() (see the component).
+ *   Heat  — the table grid: rows = price levels, columns = time buckets,
+ *     cell background = heat colour (the page's Heat lens).
  *
  *   ┌ controls ─────────────────────────────────────────────────────┐
- *   │ Model 1|2|3 · Coin|Pair · Range ▾ · Colours ▾ · Intensity ▾   │
- *   │ Detail low|mid|high|full · Values ☐ · Close path ☐            │
- *   ├ table grid (heat cells + Σ-row column) ┬─────┬ overview ──────┤
- *   │                                        │     │ key levels     │
- *   └────────────────────────────────────────┴─────┴────────────────┘
+ *   │ Model 1|2|3 · Coin|Pair · Range ▾ · Lens Walls|Heat · Colours  │
+ *   │ Intensity ▾ · (Walls: Split ☐ · row height fixed like the page) │
+ *   ├ chart ┬─────┬ overview ──────┤
+ *   │       │     │ key levels     │
+ *   └───────┴─────┴────────────────┘
  *
  *  - Coin mode = ALL exchanges aggregated (default); Pair = Binance
  *  - Key liquidation levels: top-8 clusters/side with distance % (page panel)
@@ -27,6 +35,7 @@ import { COLORSCHEME_IDS, COLORSCHEMES, fmtUsd } from "./charts/heatmap-colormap
 
 const RANGES = ["12h", "24h", "48h", "3d", "7d", "14d", "30d", "90d", "180d", "1y", "2y"] as const;
 const MODELS = ["1", "2", "3"] as const;
+const LENSES = ["walls", "heat"] as const;
 const DETAILS: { v: DetailLevel; l: string }[] = [
   { v: "low", l: "Low" },
   { v: "mid", l: "Mid" },
@@ -84,8 +93,10 @@ export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
   const [model, setModel] = useState<(typeof MODELS)[number]>("1");
   const [mode, setMode] = useState<"coin" | "pair">("coin");
   const [range, setRange] = useState<string>("3d");
+  const [lens, setLens] = useState<(typeof LENSES)[number]>("walls");
   const [colours, setColours] = useState<string>("viridis");
   const [intensity, setIntensity] = useState<number>(0);
+  const [split, setSplit] = useState(false);
   const [detail, setDetail] = useState<DetailLevel>("mid");
   const [showCandles, setShowCandles] = useState(true);
   const [showValues, setShowValues] = useState(false);
@@ -194,6 +205,18 @@ export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
             ))}
           </select>
         </label>
+        <div className="flex overflow-hidden rounded-md border border-neutral-700 text-xs">
+          {(["walls", "heat"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setLens(v)}
+              title={v === "walls" ? "Top-24 clusters as wall bars — formed until swept (the classic view)" : "Continuous heat grid — price rows × time cols"}
+              className={`px-2.5 py-1 capitalize ${lens === v ? "bg-neutral-100 font-medium text-neutral-900" : "bg-neutral-900 text-neutral-400 hover:text-neutral-200"}`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
         <label className="flex items-center gap-1.5 text-xs text-neutral-400">
           Colours
           <select
@@ -219,53 +242,80 @@ export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
           />
           <span className="w-8 font-mono text-[10px] text-neutral-500">≥{intensity * 100}%</span>
         </label>
-        <div className="flex overflow-hidden rounded-md border border-neutral-700 text-xs">
-          {DETAILS.map((d) => (
-            <button
-              key={d.v}
-              onClick={() => setDetail(d.v)}
-              title={`~${d.v === "low" ? "24 price rows × 36 time cols" : d.v === "mid" ? "48 × 72" : d.v === "high" ? "96 × 144" : "every raw bin"} grid`}
-              className={`px-2 py-1 ${detail === d.v ? "bg-neutral-100 font-medium text-neutral-900" : "bg-neutral-900 text-neutral-400 hover:text-neutral-200"}`}
-            >
-              {d.l}
-            </button>
-          ))}
-        </div>
-        <label className="flex items-center gap-1.5 text-xs text-neutral-400">
-          <input type="checkbox" checked={showValues} onChange={(e) => setShowValues(e.target.checked)} className="accent-emerald-400" />
-          Values
-        </label>
-        <label className="flex items-center gap-1.5 text-xs text-neutral-400">
-          <input type="checkbox" checked={showCandles} onChange={(e) => setShowCandles(e.target.checked)} className="accent-emerald-400" />
-          Close path
-        </label>
+        {lens === "walls" ? (
+          <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+            <input type="checkbox" checked={split} onChange={(e) => setSplit(e.target.checked)} className="accent-emerald-400" />
+            Split
+          </label>
+        ) : (
+          <>
+            <div className="flex overflow-hidden rounded-md border border-neutral-700 text-xs">
+              {DETAILS.map((d) => (
+                <button
+                  key={d.v}
+                  onClick={() => setDetail(d.v)}
+                  title={`~${d.v === "low" ? "24 price rows × 36 time cols" : d.v === "mid" ? "48 × 72" : d.v === "high" ? "96 × 144" : "every raw bin"} grid`}
+                  className={`px-2 py-1 ${detail === d.v ? "bg-neutral-100 font-medium text-neutral-900" : "bg-neutral-900 text-neutral-400 hover:text-neutral-200"}`}
+                >
+                  {d.l}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+              <input type="checkbox" checked={showValues} onChange={(e) => setShowValues(e.target.checked)} className="accent-emerald-400" />
+              Values
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-neutral-400">
+              <input type="checkbox" checked={showCandles} onChange={(e) => setShowCandles(e.target.checked)} className="accent-emerald-400" />
+              Close path
+            </label>
+          </>
+        )}
         <span className="ml-auto flex items-center gap-2 text-[10px] text-neutral-500">
           <span className={`inline-block h-1.5 w-1.5 rounded-full ${q.data?.stale ? "bg-amber-400" : "bg-emerald-400"}`} />
           Updated {updated} · {mode === "coin" ? "all venues" : "Binance"} · {q.data?.instrument ?? m.symbol}
         </span>
       </div>
 
-      {/* ---- table grid + right panels ---- */}
+      {/* ---- chart + right panels ---- */}
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/60 p-1.5">
-          <CoinglassHeatmapTable
-            model={{
-              yAxis: m.yAxis,
-              columns: m.columns,
-              candles: m.candles,
-              keyLevels: m.keyLevels,
-              lastPrice: ov.lastPrice,
-              priceStep: ov.priceStep,
-              columnMinutes: ov.columnMinutes,
-              updateTime: m.updateTime,
-            }}
-            colors={colours}
-            intensityMin={intensity}
-            detail={detail}
-            showCandles={showCandles}
-            showValues={showValues}
-            priceDecs={Math.min(2, decs)}
-          />
+          {lens === "walls" ? (
+            <CoinglassWalls
+              model={{
+                yAxis: m.yAxis,
+                columns: m.columns,
+                candles: m.candles,
+                lastPrice: ov.lastPrice,
+                priceStep: ov.priceStep,
+              }}
+              colors={colours}
+              intensityMin={intensity}
+              split={split}
+              showCandles={showCandles}
+              height={560}
+              priceDecs={Math.min(2, decs)}
+            />
+          ) : (
+            <CoinglassHeatmapTable
+              model={{
+                yAxis: m.yAxis,
+                columns: m.columns,
+                candles: m.candles,
+                keyLevels: m.keyLevels,
+                lastPrice: ov.lastPrice,
+                priceStep: ov.priceStep,
+                columnMinutes: ov.columnMinutes,
+                updateTime: m.updateTime,
+              }}
+              colors={colours}
+              intensityMin={intensity}
+              detail={detail}
+              showCandles={showCandles}
+              showValues={showValues}
+              priceDecs={Math.min(2, decs)}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
@@ -364,13 +414,15 @@ export default function StopmapSection({ sym = "BTC" }: { sym?: string }) {
 
       {/* ---- reading guide ---- */}
       <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 px-3 py-2 text-[10px] leading-relaxed text-neutral-500">
-        Coinglass Model {m.model} estimates ({m.mode} mode · {m.range} window · {m.liqRows.toLocaleString()} raw price bins): leveraged
-        positions that would be force-closed at each price — exchanges do not publish individual liquidation prices, so every
-        number is a Coinglass estimate. Table rows aggregate {m.overview.priceStep.toFixed(2)}-wide price bins; each cell&rsquo;s
-        colour shows that row·column&rsquo;s open liquidations (γ=0.7, page&rsquo;s Heat lens) and the right Σ column the row&rsquo;s
-        time-summed total. Bright clusters are liquidity magnets that <em>attract</em> sweeps. For pullback entries along the
-        trend: in an uptrend the below-price (green) rows are the zones price is drawn toward; above-price (red) rows cap
-        squeezes. The amber ▸ marks the current price row; the white dots are the candle-close path.
+        Coinglass Model {m.model} estimates ({m.mode} mode · {m.range} window · {m.liqRows.toLocaleString()} raw price bins · row height fixed at
+        {" "}{(560 / m.yAxis.length).toFixed(1)}px/bin like the page): leveraged positions that would be force-closed at each price — exchanges do not
+        publish individual liquidation prices, so every number is a Coinglass estimate. <strong className="text-neutral-400">Walls</strong> — the page&rsquo;s
+        exact buildWalls(): runs of normalized ≥0.3 merged across ±1 row (80% column overlap), re-split on ≥2 empty columns, top 24 by
+        size×width, drawn formed→swept with thickness tier 3/5/8/11px and LUT colour at peak intensity (floor .35); walls reaching the right
+        edge are <em>active</em> (not yet swept), and the top-14 carry price·size labels. <strong className="text-neutral-400">Heat</strong> — the
+        continuous grid (rows aggregate {" "}{m.overview.priceStep.toFixed(2)}-wide bins, cell colour = that row·column&rsquo;s open liquidations, right Σ
+        column time-summed). Bright clusters are liquidity magnets that <em>attract</em> sweeps. For pullback entries along the trend: in an
+        uptrend the below-price (green) walls are the zones price is drawn toward; above-price (red) walls cap squeezes.
       </div>
     </div>
   );
