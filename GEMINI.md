@@ -10,11 +10,13 @@ trigger: always_on
 
 ---
 
-## 0. DEPENDENCY REFERENCE
+## 0. DEPENDENCY REFERENCE & DETERMINISTIC GROUNDING PROTOCOL
 
-Check only the skills and tools required by the active task. For cg-terminal,
-the workspace SOP defines the Step 1 checks. The catalog below records available
-resources. Installation, schema presence, and connectivity are separate facts.
+[BOOT-00] [GROUNDING_ARCHITECTURE]:
+Antigravity operates a two-tiered grounding engine to achieve 100% rule enforcement without incurring turn-latency stalls:
+1. **Core Environmental Manifests (`[BOOT-01]`)**: The 4 primary plugins are physically read on every turn to ground runtime tools, permissions, and environment state.
+2. **Deterministic Task-Routed Skills (`[BOOT-02]`)**: Skills are physically read and loaded via `read_file` based on the active task domain. When executing or auditing domain-specific tasks, the relevant skill files MUST be physically read before generating output.
+3. **Cognitive Invariant Priming**: Core invariants from `gravitas`, `karpathy-guidelines`, `ponytail`, and `kaizen-agent` are permanently embedded directly in this document (`GEMINI.md`) ensuring they govern every thought and action even before a file read tool call executes.
 
 [BOOT-01] [PLUGINS_PHYSICAL_GROUNDING]: On EVERY turn, interaction, and reply, Antigravity MUST physically read, ground, and analyze the following 4 core plugins by default before generating any output:
   - `harness-antigravity`: [`C:/Users/SIGMA/.gemini/config/plugins/harness-antigravity/plugin.json`](file:///C:/Users/SIGMA/.gemini/config/plugins/harness-antigravity/plugin.json) — Agent governance, pipeline orchestration, and execution guardrails.
@@ -25,30 +27,26 @@ resources. Installation, schema presence, and connectivity are separate facts.
     * `superpowers`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers) — Structured planning, plan execution fidelity, systematic debugging runtimes.
     * `chrome-devtools-plugin`: [`C:/Users/SIGMA/.gemini/config/plugins/chrome-devtools-plugin`](file:///C:/Users/SIGMA/.gemini/config/plugins/chrome-devtools-plugin) — Browser telemetry, live order-book visual rendering, and DOM inspection.
 
-[BOOT-02] [SKILLS_PHYSICAL_GROUNDING]: Read and verify the skill files and canonical specifications that apply to the current task.
-  - `CANONICAL_MASTER_SPECIFICATION.md`: `desk/CANONICAL_MASTER_SPECIFICATION.md` in the active CG Terminal workspace — Permanent desk constitution governing the 12-step execution chain, safety gates 1–11, and the 8-voice council.
-  - `gravitas`: [`C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md) — Model-agnostic reliability runtime; enforces 6 engineering invariants (read before edit, test before assert, zero unverified claims).
-  - `karpathy-guidelines`: [`C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md) — 4 core principles: Think before acting, Simplicity first, Surgical execution, Goal-driven empirical verification.
-  - `ponytail`: [`C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md) — Lazy senior developer minimal code protocol: YAGNI, standard library primacy, surgical minimum edits.
-  - `quant-analyst`: [`C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md) — Mathematical expectancy ($EV$), Sharpe/Sortino ratios, and Markowitz portfolio risk allocation.
-  - `super-hedge-fund-skill`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md) — Multi-agent hedge fund consensus engine combining quantitative fundamental/technical/valuation analytics with institutional investor personas (Buffett, Wood, Burry, Lynch).
-  - `backtesting-frameworks`: [`C:/Users/SIGMA/.gemini/config/skills/backtesting-frameworks/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/backtesting-frameworks/SKILL.md) — Out-of-sample backtest validation, lookahead-free grammar, and walk-forward verification.
-  - `thinking-model-router`: [`C:/Users/SIGMA/.gemini/config/skills/thinking-model-router/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/thinking-model-router/SKILL.md) — Mandatory routing through the 10-model cognitive lattice (First Principles, Pre-Mortem, Probabilistic EV, etc.).
-  - `executing-plans`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/executing-plans/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/executing-plans/SKILL.md) — Rigorous step-by-step plan execution without skipping mandatory verification steps.
-  - `verification-before-completion`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/verification-before-completion/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/verification-before-completion/SKILL.md) — Mandatory verification gate: Iron Law (no completion claims without fresh empirical verification evidence).
-  - `writing-plans` (`/plan`): [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/writing-plans/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/writing-plans/SKILL.md) — Architectural decomposition and multi-step task mapping prior to system mutations.
-  - `brainstorming`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/brainstorming/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/brainstorming/SKILL.md) — Socratic multi-scenario hypothesis exploration and pre-mortem edge-case formulation.
-  - `systematic-debugging`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/systematic-debugging/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/systematic-debugging/SKILL.md) — Four-phase root-cause triage, evidence logging, and hypothesis verification.
-  - `windows-shell-reliability`: [`C:/Users/SIGMA/.gemini/config/skills/windows-shell-reliability/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/windows-shell-reliability/SKILL.md) — Safe PowerShell command execution, token separation, and terminal process control.
-  - `reverse-engineer-anything`: [`C:/Users/SIGMA/.gemini/config/skills/reverse-engineer-anything/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/reverse-engineer-anything/SKILL.md) — Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA.
-  - `kaizen-agent`: [`C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md) — Autonomous self-optimization, continuous learning, 5-whys triage, and anti-regression engine.
-  - `trading-skills suite`:
+[BOOT-02] [SKILLS_DETERMINISTIC_PHYSICAL_GROUNDING]: 
+Whenever a task enters one of the following execution categories, Antigravity MUST physically read the corresponding `SKILL.md` file(s) before proceeding:
+  - **Category A: Trading, Trade Formulation, Risk, or Order Desk Tasks**:
+    * `CANONICAL_MASTER_SPECIFICATION.md`: `desk/CANONICAL_MASTER_SPECIFICATION.md` — Mandatory constitution.
     * `risk-reward-sanity-check`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/risk-reward-sanity-check/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/risk-reward-sanity-check/SKILL.md)
-    * `market-regime-analysis`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/market-regime-analysis/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/market-regime-analysis/SKILL.md)
     * `position-sizing`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/position-sizing/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/position-sizing/SKILL.md)
-    * `evidence-gap-check`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/evidence-gap-check/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/evidence-gap-check/SKILL.md)
-    * `execution-plan-check`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/execution-plan-check/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/execution-plan-check/SKILL.md)
-    * `catalyst-map`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/catalyst-map/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/catalyst-map/SKILL.md)
+    * `market-regime-analysis`: [`C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/market-regime-analysis/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/trading-skills/skills/market-regime-analysis/SKILL.md)
+    * `quant-analyst`: [`C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/quant-analyst/SKILL.md)
+    * `super-hedge-fund-skill`: [`C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/super-hedge-fund-skill/SKILL.md)
+  - **Category B: Code Mutation, Refactoring, Bugfix, or PR Tasks**:
+    * `gravitas`: [`C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/gravitas/SKILL.md)
+    * `karpathy-guidelines`: [`C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/karpathy-guidelines/SKILL.md)
+    * `verification-before-completion`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/verification-before-completion/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/verification-before-completion/SKILL.md)
+    * `ponytail`: [`C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/ponytail/SKILL.md)
+  - **Category C: Systematic Triage, Error Investigation, or Pre-Mortem**:
+    * `systematic-debugging`: [`C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/systematic-debugging/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/plugins/superpowers/skills/systematic-debugging/SKILL.md)
+    * `kaizen-agent`: [`C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/kaizen-agent/SKILL.md)
+    * `thinking-model-router`: [`C:/Users/SIGMA/.gemini/config/skills/thinking-model-router/SKILL.md`](file:///C:/Users/SIGMA/.gemini/config/skills/thinking-model-router/SKILL.md)
+  - **Category D: Operational / Quick Status Queries** (e.g. `git status`, thread checks, process queries):
+    * Operates in **Fast Grounding Mode**: Enforces in-memory embedded invariants without redundant disk reads of narrative text, ensuring sub-second response times.
 
 [BOOT-03] [MCP_SERVERS_PHYSICAL_GROUNDING]: Verify runtime connectivity for servers required by the current task before relying on their output.
   - `delta-exchange-mcp`: [`C:/Users/SIGMA/.gemini/antigravity/mcp/delta-exchange-mcp`](file:///C:/Users/SIGMA/.gemini/antigravity/mcp/delta-exchange-mcp) — Live CLOB, wallet balances, margined positions, open orders, and bracket placement on Delta Exchange India.
